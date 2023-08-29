@@ -41,6 +41,11 @@ class MainApp():
             padx=frame_padx,
             pady=frame_pady
         )
+        
+        # Score Dashboard
+        
+        self.score = LabelFrame(self.main_window,text="Overview")
+        
 
         prediction_radio = ttk.Radiobutton(self.radio_frame, text="Prediction Input",variable=self.radio_selection,value=1)
         prediction_radio.grid(column=0,row=0)
