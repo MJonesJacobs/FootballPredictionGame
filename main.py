@@ -6,6 +6,7 @@ import os
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from tkinter_functions import clear_subframes
 from manual_input import ManualPredictionInput
+from automatic_result_upload import update_results, update_scores, OverviewFrame
 
 MAIN_DIR = os.getcwd()
 
@@ -25,9 +26,10 @@ class MainApp():
         scrnwidth= self.main_window.winfo_screenwidth()
         scrnheight= self.main_window.winfo_screenheight()
 
-        self.main_window.columnconfigure(0,weight=1)
-        self.main_window.columnconfigure(1,weight=4)
-        self.main_window.rowconfigure(0,weight=1)
+        self.main_window.columnconfigure(0,weight=0)
+        self.main_window.columnconfigure(1,weight=1)
+        self.main_window.rowconfigure(0,weight=0)
+        self.main_window.rowconfigure(1,weight=1)
 
         self.radio_frame = LabelFrame(self.main_window,text="Radio Frame",borderwidth=2)
 
@@ -40,18 +42,17 @@ class MainApp():
             sticky="nsew",
             padx=frame_padx,
             pady=frame_pady
-        )
-        
-        # Score Dashboard
-        
-        self.score = LabelFrame(self.main_window,text="Overview")
+        )      
         
 
         prediction_radio = ttk.Radiobutton(self.radio_frame, text="Prediction Input",variable=self.radio_selection,value=1)
-        prediction_radio.grid(column=0,row=0)
+        prediction_radio.grid(column=0,row=0,sticky="w")
         Dashboard_radio = ttk.Radiobutton(self.radio_frame, text="Dashboard",variable=self.radio_selection,value=2)
-        Dashboard_radio.grid(column=0,row=1)
+        Dashboard_radio.grid(column=0,row=1,sticky="w")
 
+        self.overview = LabelFrame(self.main_window,text="Overview")
+        self.overview.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
+        overview_object = OverviewFrame(self.overview)
 
         self.active_frame = LabelFrame(self.main_window,text="Active Frame",borderwidth=2)
         self.active_frame.grid(
@@ -59,7 +60,8 @@ class MainApp():
             column=1,
             sticky="nsew",
             padx=frame_padx,
-            pady=frame_pady
+            pady=frame_pady,
+            rowspan=2
         )
 
 
@@ -75,6 +77,11 @@ class MainApp():
             
            
 if __name__ == "__main__":
+    # Update any recent results;
+    update_results()
+    print("Results Added")
+    update_scores()
+    print("Scores Updated")
     MainApp()
 
 # read_predictions(38)

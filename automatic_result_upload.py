@@ -1,5 +1,7 @@
 from web_scrape import get_gw_info, FixtureData
 from db_link import DB_CURSOR, DB_CONNECTION
+from tkinter import *
+from tkinter import ttk
 
 class Results():
     def __init__(self,results:list[FixtureData],new_gws:list[int]) -> None:
@@ -13,7 +15,24 @@ class Results():
         DB_CURSOR.executemany("UPDATE 'Data_Commits' SET  DataAdded = 1 WHERE season = '2023_24' AND gameweek = ?",self.new_gws )
         DB_CONNECTION.commit()
         
+def total_score(player:str)->int:
+    return DB_CURSOR.execute("SELECT SUM(Points) FROM '2023_24' WHERE player = ?",(player,)).fetchone()[0]
 
+def gw_score(player:str,gw:int)->int:
+    return DB_CURSOR.execute("SELECT SUM(Points) FROM '2023_24' WHERE player = ? AND gameweek = ?",(player,gw)).fetchone()[0]
+
+def total_score_upto_gw(player:str,gw:int):
+    return DB_CURSOR.execute("SELECT SUM(Points) FROM '2023_24' WHERE player = ? AND gameweek <= ? AND ResultAdded = 1",(player,gw)).fetchone()[0]
+
+def top_home_teams(player:str):
+    return DB_CURSOR.execute("SELECT HomeTeam ,SUM(points) AS Points FROM '2023_24' WHERE player = ? AND ResultAdded = 1 GROUP BY HomeTeam ORDER BY Points DESC, HomeTeam ASC",(player,)).fetchall()
+
+def top_away_teams(player:str):
+    return DB_CURSOR.execute("SELECT AwayTeam ,SUM(points) AS Points FROM '2023_24' WHERE player = ? AND ResultAdded = 1 GROUP BY AwayTeam ORDER BY Points DESC, AwayTeam ASC",(player,)).fetchall()
+
+def number_points(player:str,point:int):
+    return DB_CURSOR.execute("SELECT COUNT(Points) FROM '2023_24' WHERE player = ? AND Points = ? AND ResultAdded = 1",(player,point)).fetchone()[0]
+    
 def update_results():
     missing_gws = [x[0] for x in DB_CURSOR.execute("SELECT gameweek FROM Data_Commits WHERE season = '2023_24' AND DataAdded = 0")]
 
@@ -45,4 +64,98 @@ WHERE PredictionAdded = 1 AND ResultAdded = 1;
 """)
     DB_CONNECTION.commit()
 
-update_scores()
+
+class OverviewFrame():
+    def __init__(self,master:Frame) -> None:
+        
+        
+        total_label = Label(master,text="Total Score",justify="center",padx=5,pady=2)
+        total_label.grid(row=1,column=0) 
+        
+        sep = ttk.Separator(master,orient="horizontal")
+        sep.grid(row=3,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        
+        sep = ttk.Separator(master,orient="horizontal")
+        sep.grid(row=8,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        
+        sep = ttk.Separator(master,orient="horizontal")
+        sep.grid(row=14,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        
+        sep = ttk.Separator(master,orient="horizontal")
+        sep.grid(row=18,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        
+        sep = ttk.Separator(master,orient="horizontal")
+        sep.grid(row=24,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        
+        for i,gw in enumerate(self.recent_gameweeks()):
+            lab = Label(master,text=f"Gameweek {gw}",justify="left",padx=5,pady=2)
+            lab.grid(row=i+4,column=0)
+            
+            lab = Label(master,text=f"Gameweek {gw}",justify="left",padx=5,pady=2)
+            lab.grid(row=i+9,column=0)
+        
+        for ii,name in enumerate(["Matt","Simon"]):
+            home_top = top_home_teams(name)
+            away_top = top_away_teams(name)
+            
+            matt_label = Label(master,text=name,justify="center",padx=5,pady=2)
+            matt_label.grid(row=0,column=ii+1)
+            
+            total_score_str = total_score(name) 
+            total_score_label = Label(master,text=total_score_str,justify="center",padx=2,pady=2)
+            total_score_label.grid(row=1,column=ii+1)
+
+            for i,gw in enumerate(self.recent_gameweeks()):
+                score = gw_score(name,gw)
+                score_label = Label(master,text=str(score),justify="center",padx=5,pady=2)
+                score_label.grid(row=i+4,column=ii+1)
+                
+                cumulative_score = total_score_upto_gw(name,gw)
+                cumulative_score_label = Label(master,text=str(cumulative_score),justify="center",padx=5,pady=2)
+                cumulative_score_label.grid(row=i+9,column=ii+1)
+        
+            for i,point in enumerate([3,1,0]):
+                lab = Label(master,text=f"{point} Point Games",justify="left",padx=5,pady=2)
+                lab.grid(column=0,row=15+i)
+                
+                point_total = number_points(name,point)
+                point_label = Label(master,text=str(point_total),justify="center",padx=5,pady=2)
+                point_label.grid(row=i+15,column=ii+1)
+            
+            for i in range(5):
+                lab = Label(master,text=f"Home Rank {i+1}")
+                lab.grid(column=0,row=19+i)
+                lab = Label(master,text=f"Away Rank {i+1}")
+                lab.grid(column=0,row=25+i)
+                
+            for i, team in enumerate(home_top):
+                if i <= 4:
+                    teamname , score = team
+                    point_label = Label(master,text=f"{teamname} - [{score}]",justify="center",padx=5,pady=2)
+                    point_label.grid(row=19+i,column=ii+1)
+                else:
+                    break
+            
+            for i, team in enumerate(away_top):
+                if i <= 4:
+                    teamname , score = team
+                    point_label = Label(master,text=f"{teamname} - [{score}]",justify="center",padx=5,pady=2)
+                    point_label.grid(row=25+i,column=ii+1)
+                else:
+                    break
+            
+                
+    
+    def recent_gameweeks(self)->list[int]:
+        recent_gameweeks = [x[0] for x in DB_CURSOR.execute("SELECT gameweek FROM Data_Commits WHERE season = '2023_24' AND DataAdded = 1")][::-1]
+        if len(recent_gameweeks)>5:
+            return recent_gameweeks[:5]
+        else:
+            return recent_gameweeks
+        
+        
+
+
+        
+print(top_home_teams("Simon"))
+print(top_away_teams("Simon"))
