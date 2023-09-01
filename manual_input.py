@@ -39,31 +39,31 @@ class PredictionRow():
         
         self.home_logo = TeamImage(self.hometeam)
         self.home_logo_label = ttk.Label(frame,image=self.home_logo.photoimage,anchor=CENTER)
-        self.home_logo_label.grid(row = self.row,column=0,sticky="nsew",padx=5,pady=5)
+        self.home_logo_label.grid(row = self.row,column=1,sticky="nsew",padx=5,pady=5)
         home_label = Label(frame, text=self.hometeam,width=15,justify="right")
-        home_label.grid(row = self.row,column=1,sticky="nsew",padx=5,pady=5)
+        home_label.grid(row = self.row,column=2,sticky="nsew",padx=5,pady=5)
         
         
         
         self.home_score_entry = ttk.Entry(frame,textvariable=self.home_prediction,width=5,justify=CENTER)
-        self.home_score_entry.grid(row = self.row,column=2,padx=5,pady=5)
+        self.home_score_entry.grid(row = self.row,column=3,padx=5,pady=5)
         
         dash = Label(frame,text=" - ",width=10)
-        dash.grid(row = self.row,column=3,sticky="nsew",padx=5,pady=5)
+        dash.grid(row = self.row,column=4,sticky="nsew",padx=5,pady=5)
         
         self.away_score_entry = ttk.Entry(frame,textvariable=self.away_prediction,width=5,justify=CENTER)
-        self.away_score_entry.grid(row = self.row,column=4,padx=5,pady=5)
+        self.away_score_entry.grid(row = self.row,column=5,padx=5,pady=5)
         
         away_label = Label(frame, text=self.awayteam,width=15,justify="left")
-        away_label.grid(row = self.row,column=5,sticky="nsew",padx=5,pady=5)
+        away_label.grid(row = self.row,column=6,sticky="nsew",padx=5,pady=5)
         
         self.away_logo = TeamImage(self.awayteam)
         self.away_logo_label = ttk.Label(frame,image=self.away_logo.photoimage,anchor=CENTER)
-        self.away_logo_label.grid(row = self.row,column=6,sticky="nsew",padx=5,pady=5)
+        self.away_logo_label.grid(row = self.row,column=7,sticky="nsew",padx=5,pady=5)
         self.override = IntVar()
         self.override.trace("w",self.trace_override)
-        self.override_check = ttk.Checkbutton(frame,text="Override:",var=self.override)
-        self.override_check.grid(row = self.row,column=7,sticky="nsew",padx=5,pady=5)
+        self.override_check = ttk.Checkbutton(frame,text="Override:",var=self.override,compound=LEFT)
+        self.override_check.grid(row = self.row,column=9,sticky="nsew",padx=5,pady=5)
         
         if self.extisting_prediction:
             home,away = self.get_existing_predictions()
@@ -112,11 +112,11 @@ class PredictionRow():
         return(self.home_prediction.get(),self.away_prediction.get(),self.gameweek,1,self.hometeam,self.awayteam,self.player)
     
 class AllGameweekPredictions():
-    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str) -> None:
+    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str,start_row:int) -> None:
         self.all_rows = list()
         for row,fixture in enumerate(fixture_data):
-            fixture_input = PredictionRow(player,gameweek,fixture,row)
-            fixture_input.input_frame(master_frame,row)
+            fixture_input = PredictionRow(player,gameweek,fixture,start_row+row)
+            fixture_input.input_frame(master_frame,start_row+row)
             self.all_rows.append(fixture_input)
     
     def commit_predictions(self,table:str):
@@ -139,12 +139,83 @@ class AllGameweekPredictions():
                 out.append(fixture)
         return out
         
+class ResultRow():
+    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int) -> None:
+        self.row = row
+        self.gameweek = gameweek
+        self.player = player
+        self.hometeam = scape_data.home_team
+        self.awayteam = scape_data.away_team
+        # self.home_prediction = IntVar()
+        
+        self.home_prediction, self.away_prediction = self.get_existing_predictions()
+        self.home_result, self.away_result = self.get_existing_results()        
+        self.extisting_prediction = self.check_if_result_Added()
+        self.score = self.get_points()
+        
+    def check_if_result_Added(self):
+        result = DB_CURSOR.execute("SELECT ResultAdded FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()
+        return result[0][0] == 1
+    
+    def get_existing_predictions(self):
+        return DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0]
+    
+    def get_existing_results(self):
+        if self.check_if_result_Added():
+            return DB_CURSOR.execute("SELECT HomeScore, AwayScore FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0]
+        else:
+            return ("TBC","TBC")
+        
+    def get_points(self):
+        if self.check_if_result_Added():
+            return DB_CURSOR.execute("SELECT Points FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0][0]
+        else:
+            return "NA"
+        
+    def input_frame(self,frame:Frame,master_row:int)->Frame:
+        
+        frame.rowconfigure(master_row,weight=1)
+        
+        self.home_logo = TeamImage(self.hometeam)
+        self.home_logo_label = ttk.Label(frame,image=self.home_logo.photoimage,anchor=CENTER)
+        self.home_logo_label.grid(row = self.row,column=1,sticky="nsew",padx=5,pady=5)
+        home_label = Label(frame, text=self.hometeam,width=15,justify="right")
+        home_label.grid(row = self.row,column=2,sticky="nsew",padx=5,pady=5)
+        
+        self.home_result_label = Label(frame,text=f"{self.home_result}") 
+        self.home_result_label.grid(row = self.row,column=3,padx=5,pady=5)
+        
+        dash = Label(frame,text=" - ",width=10)
+        dash.grid(row = self.row,column=4,sticky="nsew",padx=5,pady=5)
+        
+        self.away_result_label = Label(frame,text=f"{self.away_result}") 
+        self.away_result_label.grid(row = self.row,column=5,padx=5,pady=5)
+        
+        away_label = Label(frame, text=self.awayteam,width=15,justify="left")
+        away_label.grid(row = self.row,column=6,sticky="nsew",padx=5,pady=5)
+        
+        self.away_logo = TeamImage(self.awayteam)
+        self.away_logo_label = ttk.Label(frame,image=self.away_logo.photoimage,anchor=CENTER)
+        self.away_logo_label.grid(row = self.row,column=7,sticky="nsew",padx=5,pady=5)
+        
+        self.score_label = Label(frame, text=f"Score: {self.score}",width=15,justify="center")
+        self.score_label.grid(row=self.row,column=9,sticky="nsew",padx=5,pady=5)
+    
+class AllGameweekResults():
+    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str,start_row:int) -> None:
+        self.all_rows = list()
+        for row,fixture in enumerate(fixture_data):
+            fixture_input = ResultRow(player,gameweek,fixture,start_row+row)
+            fixture_input.input_frame(master_frame,start_row+row)
+            self.all_rows.append(fixture_input)
+
 class ManualPredictionInput():
     def __init__(self,master:Frame) -> None:
         
         # Create Frames
         self.index = LabelFrame(master,text="Index")
-        self.inputs = LabelFrame(master,text="Predictions")
+        self.predictions = LabelFrame(master,text="Predictions")
+        self.result = LabelFrame(master,text="Result")
         self.buttons = LabelFrame(master,text="Buttons")
         
         # Weight Frames
@@ -156,8 +227,8 @@ class ManualPredictionInput():
         # Grid Frames
         self.index.grid(row=0,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
         self.buttons.grid(row=0,column=1,sticky="nsew",padx=frame_padx,pady=frame_pady)
-        self.inputs.grid(row=1,column=0,columnspan=2,sticky="nsew",padx=frame_padx,pady=frame_pady)
-        
+        self.predictions.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
+        self.result.grid(row=1,column=1,sticky="nsew",padx=frame_padx,pady=frame_pady)
         #----------------------------------------------------------#
         #                       Index Section                      #
         #----------------------------------------------------------#
@@ -209,19 +280,22 @@ class ManualPredictionInput():
     @property
     def player(self)->str:
         return str(self.selected_player.get())
-        
+    
     def update_prediction_fixtures(self,*args):
-        if hasattr(self,"predictions"):
-            clear_subframes(self.inputs)
-            del self.predictions
+        if hasattr(self,"prediction_row"):
+            clear_subframes(self.predictions)
+            clear_subframes(self.result)
+            del self.prediction_row
+            del self.result_row
+            
         print("Update Fixture Button Pressed")
         self.generate_predictions()
         
     def commit_predictions(self,*args):
         print("Commit Fixture Button Pressed")
-        if not hasattr(self,"predictions"):
+        if not hasattr(self,"prediction_row"):
             raise ValueError("No Prediction Object Yet!")
-        self.predictions.commit_predictions("2023_24")
+        self.prediction_row.commit_predictions("2023_24")
         self.generate_predictions()
             
         
@@ -230,8 +304,30 @@ class ManualPredictionInput():
         # Fetch Gameweek Fixtures
         gw_data = get_gw_info(self.gameweek)
         
-        self.predictions = AllGameweekPredictions(gw_data,self.player,self.inputs,self.gameweek)
-            
+        # # Generate Frame Headers
+        
+        # home_header = Label(self.predictions,text="Home Team",anchor=CENTER)
+        # home_header.grid(row=0,column=0,columnspan=2)
+        
+        # prediction_header = Label(self.predictions,text=f"{self.player} Prediction",anchor=CENTER)
+        # prediction_header.grid(row=0,column=2,columnspan=3)
+        
+        # home_header = Label(self.predictions,text="Away Team",anchor=CENTER)
+        # home_header.grid(row=0,column=5,columnspan=2)
+        
+        # edit_header = Label(self.predictions,text="Edit?",anchor=CENTER)
+        # edit_header.grid(row=0,column=7)
+        
+        # header_sep = ttk.Separator(self.predictions,orient="horizontal")
+        # header_sep.grid(row=1,column=0,columnspan=8,sticky="ew")
+
+        # # for icol in 
+        for frame in [self.predictions,self.result]:
+            for col in [0,8,10]:
+                frame.columnconfigure(col,weight=1)
+        
+        self.prediction_row = AllGameweekPredictions(gw_data,self.player,self.predictions,self.gameweek,0)
+        self.result_row = AllGameweekResults(gw_data,self.player,self.result,self.gameweek,0)
         
         
         
