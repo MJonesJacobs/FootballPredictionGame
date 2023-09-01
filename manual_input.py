@@ -6,10 +6,11 @@ from tkinter_functions import clear_subframes
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from web_scrape import get_gw_info, FixtureData
 from tkinter import messagebox
-
+from TeamLogos import TeamImage
 
 class PredictionRow():
-    def __init__(self, player:str,gameweek:int, scape_data:FixtureData) -> None:
+    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int) -> None:
+        self.row = row
         self.gameweek = gameweek
         self.player = player
         self.hometeam = scape_data.home_team
@@ -27,27 +28,68 @@ class PredictionRow():
         
     def check_if_record_exists(self):
         result = DB_CURSOR.execute("SELECT PredictionAdded FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()
-        return result[0][0] == 0
+        return result[0][0] == 1
     
-    def input_frame(self,master:Frame,master_row:int)->Frame:
-        master.rowconfigure(master_row,weight=1)
-        frame = Frame(master)
-        home_label = Label(frame, text=self.hometeam,width=20,justify="right")
-        home_label.grid(row=0,column=0,sticky="e")
+    def get_existing_predictions(self):
+        return DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0]
+    
+    def input_frame(self,frame:Frame,master_row:int)->Frame:
         
-        home_score_entry = ttk.Entry(frame,textvariable=self.home_prediction,width=5)
-        home_score_entry.grid(row=0,column=1)
+        frame.rowconfigure(master_row,weight=1)
+        
+        self.home_logo = TeamImage(self.hometeam)
+        self.home_logo_label = ttk.Label(frame,image=self.home_logo.photoimage,anchor=CENTER)
+        self.home_logo_label.grid(row = self.row,column=0,sticky="nsew",padx=5,pady=5)
+        home_label = Label(frame, text=self.hometeam,width=15,justify="right")
+        home_label.grid(row = self.row,column=1,sticky="nsew",padx=5,pady=5)
+        
+        
+        
+        self.home_score_entry = ttk.Entry(frame,textvariable=self.home_prediction,width=5,justify=CENTER)
+        self.home_score_entry.grid(row = self.row,column=2,padx=5,pady=5)
         
         dash = Label(frame,text=" - ",width=10)
-        dash.grid(row=0,column=2)
+        dash.grid(row = self.row,column=3,sticky="nsew",padx=5,pady=5)
         
-        away_score_entry = ttk.Entry(frame,textvariable=self.away_prediction,width=5)
-        away_score_entry.grid(row=0,column=3)
+        self.away_score_entry = ttk.Entry(frame,textvariable=self.away_prediction,width=5,justify=CENTER)
+        self.away_score_entry.grid(row = self.row,column=4,padx=5,pady=5)
         
-        away_label = Label(frame, text=self.awayteam,width=20,justify="left")
-        away_label.grid(row=0,column=4,sticky="w")
+        away_label = Label(frame, text=self.awayteam,width=15,justify="left")
+        away_label.grid(row = self.row,column=5,sticky="nsew",padx=5,pady=5)
         
-        frame.grid(row=master_row)
+        self.away_logo = TeamImage(self.awayteam)
+        self.away_logo_label = ttk.Label(frame,image=self.away_logo.photoimage,anchor=CENTER)
+        self.away_logo_label.grid(row = self.row,column=6,sticky="nsew",padx=5,pady=5)
+        self.override = IntVar()
+        self.override.trace("w",self.trace_override)
+        self.override_check = ttk.Checkbutton(frame,text="Override:",var=self.override)
+        self.override_check.grid(row = self.row,column=7,sticky="nsew",padx=5,pady=5)
+        
+        if self.extisting_prediction:
+            home,away = self.get_existing_predictions()
+            self.home_prediction.set(home)
+            self.away_prediction.set(away)
+            self.disable_entries()
+            self.home_score_entry.config(state="disabled")
+            self.away_score_entry.config(state="disabled")     
+        else:
+            self.override.set(1)
+            self.override_check.config(state="disabled")   
+        
+    def trace_override(self,*args):
+        if self.override.get() == 0:
+            # Check disabled
+            self.disable_entries()
+        else:
+            self.enable_entries()
+            
+    def enable_entries(self):
+        self.home_score_entry.config(state="normal")
+        self.away_score_entry.config(state="normal")
+    
+    def disable_entries(self):
+        self.home_score_entry.config(state="disabled")
+        self.away_score_entry.config(state="disabled")         
     
     def trace_home_prediction(self,*args):
         if self.home_prediction.get() >= 0:
@@ -73,7 +115,7 @@ class AllGameweekPredictions():
     def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str) -> None:
         self.all_rows = list()
         for row,fixture in enumerate(fixture_data):
-            fixture_input = PredictionRow(player,gameweek,fixture)
+            fixture_input = PredictionRow(player,gameweek,fixture,row)
             fixture_input.input_frame(master_frame,row)
             self.all_rows.append(fixture_input)
     
@@ -81,7 +123,7 @@ class AllGameweekPredictions():
         
         self.check_scores()
         
-        values = tuple([x.db_values for x in self.all_rows])
+        values = tuple([x.db_values for x in self.override_active()])
         
         DB_CURSOR.executemany(f"UPDATE '{table}' SET HomePrediction = ?, AwayPrediction = ?, Gameweek = ?, PredictionAdded = ? WHERE HomeTeam = ? AND AwayTeam = ? AND Player = ?",values)
         DB_CONNECTION.commit()
@@ -89,6 +131,13 @@ class AllGameweekPredictions():
     def check_scores(self):
         if not all([x.AreInputsValid for x in self.all_rows]):
             messagebox.showerror("Incorrect Scores","Please Ensure all scores are valid")
+    
+    def override_active(self)->list[FixtureData]:
+        out = list()
+        for fixture in self.all_rows:
+            if fixture.override.get() == 1:
+                out.append(fixture)
+        return out
         
 class ManualPredictionInput():
     def __init__(self,master:Frame) -> None:
@@ -173,14 +222,13 @@ class ManualPredictionInput():
         if not hasattr(self,"predictions"):
             raise ValueError("No Prediction Object Yet!")
         self.predictions.commit_predictions("2023_24")
+        self.generate_predictions()
             
         
     def generate_predictions(self):
         
         # Fetch Gameweek Fixtures
         gw_data = get_gw_info(self.gameweek)
-        
-        self.inputs.columnconfigure(0,weight=1)
         
         self.predictions = AllGameweekPredictions(gw_data,self.player,self.inputs,self.gameweek)
             
