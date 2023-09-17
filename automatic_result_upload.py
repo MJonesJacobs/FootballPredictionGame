@@ -12,6 +12,7 @@ class Results():
         values = tuple([x.db_values for x in self.results])
         DB_CURSOR.executemany("UPDATE '2023_24' SET HomeScore = ?, AwayScore = ?, Date = ?, ResultAdded = ? WHERE HomeTeam = ? AND AwayTeam = ?",values)
         DB_CONNECTION.commit()
+        # CHeck if all values of
         DB_CURSOR.executemany("UPDATE 'Data_Commits' SET  DataAdded = 1 WHERE season = '2023_24' AND gameweek = ?",self.new_gws )
         DB_CONNECTION.commit()
         
@@ -34,19 +35,30 @@ def number_points(player:str,point:int):
     return DB_CURSOR.execute("SELECT COUNT(Points) FROM '2023_24' WHERE player = ? AND Points = ? AND ResultAdded = 1",(player,point)).fetchone()[0]
     
 def update_results():
-    missing_gws = [x[0] for x in DB_CURSOR.execute("SELECT gameweek FROM Data_Commits WHERE season = '2023_24' AND DataAdded = 0")]
+    # Get all gameweeks with missing resuts
+    
+    missing_gws = [x[0] for x in DB_CURSOR.execute("SELECT gameweek FROM 'Data_Commits' WHERE season = '2023_24' AND DataAdded = 0")]
 
+    
     gws_to_add = list()
     all_fixtures = list()
+    complete_gws = list()
     for gw in missing_gws:
         data = get_gw_info(gw)
         
-        if any([x.home_score == None for x in data]):
-            break
+        if all([x.home_score == None for x in data]):
+            break #Ignores unplayed gameweeks
         else:
-            all_fixtures.extend(data)
-            gw_tuple = (gw,)
-            gws_to_add.append(gw_tuple)
+            for result in data:
+                if result.home_score != None:
+                    all_fixtures.append(result)
+            
+            if len(data)==len(all_fixtures):
+                gws_to_add.append((gw,))
+                
+                    
+            # gw_tuple = (gw,)
+            # gws_to_add.append(gw_tuple)
 
     results_to_add = Results(all_fixtures,gws_to_add)
     results_to_add.commit_data()
