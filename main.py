@@ -6,6 +6,7 @@ import os
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from tkinter_functions import clear_subframes
 from manual_input import ManualPredictionInput
+from SimulatedTable import TableFrame
 from automatic_result_upload import update_results, update_scores, OverviewFrame
 
 MAIN_DIR = os.getcwd()
@@ -47,8 +48,8 @@ class MainApp():
 
         prediction_radio = ttk.Radiobutton(self.radio_frame, text="Prediction Input",variable=self.radio_selection,value=1)
         prediction_radio.grid(column=0,row=0,sticky="w")
-        Dashboard_radio = ttk.Radiobutton(self.radio_frame, text="Dashboard",variable=self.radio_selection,value=2)
-        Dashboard_radio.grid(column=0,row=1,sticky="w")
+        simulated_table = ttk.Radiobutton(self.radio_frame, text="Simulated Table",variable=self.radio_selection,value=2)
+        simulated_table.grid(column=0,row=1,sticky="w")
 
         self.overview = LabelFrame(self.main_window,text="Overview")
         self.overview.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
@@ -74,6 +75,9 @@ class MainApp():
         clear_subframes(self.active_frame) # Clears whatever is in active frame
         if self.radio_selection.get() == 1:
             ManualPredictionInput(self.active_frame) # Initialises Prediction Frame
+        if self.radio_selection.get() == 2:
+            TableFrame(self.active_frame)
+            
             
            
 if __name__ == "__main__":

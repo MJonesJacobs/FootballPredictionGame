@@ -8,6 +8,9 @@ DB_CURSOR = DB_CONNECTION.cursor()
 def team_list(season:str)->list[str]:
     return DB_CURSOR.execute(f"SELECT {season} FROM 'Team_List'").fetchall()
 
+def all_teams(season:str)->list[str]:
+    return [str(x[0]) for x in DB_CURSOR.execute(f"""SELECT DISTINCT HomeTeam FROM '{season}' ORDER BY HomeTeam ASC""").fetchall()]
+
 def add_player(name:str,season:str):
     all_teams = team_list(season)
     db_push = list()

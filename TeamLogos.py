@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 from pathlib import Path
+import numpy as np
 
 LOGOS = {
     "Arsenal":r"TeamLogos\Arsenal.png",
@@ -31,23 +32,26 @@ class TeamImage():
         # Load the PNG image
         self.image = Image.open(Path(LOGOS[team]))
         
-        non_transparent = self.image.getbbox()
-        self.image = self.image.crop(non_transparent)
+        # original_width,original_height = self.image.size
+        # new_height = 40
+        # scale = new_height/original_height
+        # new_width = original_width*scale
+        # new_height = round(new_height)
+        # new_width = round(new_width)
         
-        original_width,original_height = self.image.size
-        new_height = 40
-        scale = new_height/original_height
-        new_width = original_width*scale
-        new_height = round(new_height)
-        new_width = round(new_width)
-        
-        self.image = self.image.resize((new_width,new_height))
+        # self.image = self.image.resize((new_width,new_height))
         # Create a PhotoImage object
-        self.photoimage = ImageTk.PhotoImage(self.image) #
+        self.photoimage = ImageTk.PhotoImage(self.image) 
 
 
-# offsetimg = Image.open(self.img_rel_path)
-#         offsetimg = offsetimg.resize((self.width,self.height), Image.ANTIALIAS)
-#         self.offimg = ImageTk.PhotoImage(offsetimg)
-#         self.decksectimg = ttk.Label(self.frame, image=self.offimg)
-#         self.decksectimg.grid(row=self.irow, column=self.icol, columnspan=self.colspan)
+# for key,im_path in LOGOS.items():
+#     image = Image.open(Path(im_path))
+#     original_width,original_height = image.size
+#     new_height = 40
+#     scale = new_height/original_height
+#     new_width = original_width*scale
+#     new_height = round(new_height)
+#     new_width = round(new_width)
+#     image = image.resize((new_width,new_height))
+#     image.save(Path(im_path))
+    
