@@ -80,42 +80,47 @@ WHERE PredictionAdded = 1 AND ResultAdded = 1;
 class OverviewFrame():
     def __init__(self,master:Frame) -> None:
         
+        for row in range(31):
+            master.rowconfigure(row,weight=1)
         
         total_label = Label(master,text="Total Score",justify="center",padx=5,pady=2)
-        total_label.grid(row=1,column=0) 
+        total_label.grid(row=2,column=0) 
+        
+        sep = ttk.Separator(master,orient="horizontal")
+        sep.grid(row=1,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
         
         sep = ttk.Separator(master,orient="horizontal")
         sep.grid(row=3,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
         
         sep = ttk.Separator(master,orient="horizontal")
-        sep.grid(row=8,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        sep.grid(row=9,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
         
         sep = ttk.Separator(master,orient="horizontal")
-        sep.grid(row=14,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        sep.grid(row=15,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
         
         sep = ttk.Separator(master,orient="horizontal")
-        sep.grid(row=18,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        sep.grid(row=19,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
         
         sep = ttk.Separator(master,orient="horizontal")
-        sep.grid(row=24,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        sep.grid(row=25,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
         
         for i,gw in enumerate(self.recent_gameweeks()):
             lab = Label(master,text=f"Gameweek {gw}",justify="left",padx=5,pady=2)
             lab.grid(row=i+4,column=0)
             
             lab = Label(master,text=f"Gameweek {gw}",justify="left",padx=5,pady=2)
-            lab.grid(row=i+9,column=0)
+            lab.grid(row=i+10,column=0)
         
         for ii,name in enumerate(["Matt","Simon"]):
             home_top = top_home_teams(name)
             away_top = top_away_teams(name)
             
-            matt_label = Label(master,text=name,justify="center",padx=5,pady=2)
-            matt_label.grid(row=0,column=ii+1)
+            name_label = Label(master,text=name,justify="center",padx=5,pady=2)
+            name_label.grid(row=0,column=ii+1)
             
             total_score_str = total_score(name) 
             total_score_label = Label(master,text=total_score_str,justify="center",padx=2,pady=2)
-            total_score_label.grid(row=1,column=ii+1)
+            total_score_label.grid(row=2,column=ii+1)
 
             for i,gw in enumerate(self.recent_gameweeks()):
                 score = gw_score(name,gw)
@@ -124,27 +129,27 @@ class OverviewFrame():
                 
                 cumulative_score = total_score_upto_gw(name,gw)
                 cumulative_score_label = Label(master,text=str(cumulative_score),justify="center",padx=5,pady=2)
-                cumulative_score_label.grid(row=i+9,column=ii+1)
+                cumulative_score_label.grid(row=i+10,column=ii+1)
         
             for i,point in enumerate([3,1,0]):
                 lab = Label(master,text=f"{point} Point Games",justify="left",padx=5,pady=2)
-                lab.grid(column=0,row=15+i)
+                lab.grid(column=0,row=16+i)
                 
                 point_total = number_points(name,point)
                 point_label = Label(master,text=str(point_total),justify="center",padx=5,pady=2)
-                point_label.grid(row=i+15,column=ii+1)
+                point_label.grid(row=i+16,column=ii+1)
             
             for i in range(5):
                 lab = Label(master,text=f"Home Rank {i+1}")
-                lab.grid(column=0,row=19+i)
+                lab.grid(column=0,row=20+i)
                 lab = Label(master,text=f"Away Rank {i+1}")
-                lab.grid(column=0,row=25+i)
+                lab.grid(column=0,row=26+i)
                 
             for i, team in enumerate(home_top):
                 if i <= 4:
                     teamname , score = team
                     point_label = Label(master,text=f"{teamname} - [{score}]",justify="center",padx=5,pady=2)
-                    point_label.grid(row=19+i,column=ii+1)
+                    point_label.grid(row=20+i,column=ii+1)
                 else:
                     break
             
@@ -152,9 +157,11 @@ class OverviewFrame():
                 if i <= 4:
                     teamname , score = team
                     point_label = Label(master,text=f"{teamname} - [{score}]",justify="center",padx=5,pady=2)
-                    point_label.grid(row=25+i,column=ii+1)
+                    point_label.grid(row=26+i,column=ii+1)
                 else:
                     break
+                
+        
             
                 
     
