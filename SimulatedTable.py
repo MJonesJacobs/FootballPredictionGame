@@ -197,14 +197,14 @@ def predicted_table(season:str,players:list[str])->pd.DataFrame:
         away_gd = defualt_dict_update(count_away_gd(season=season,player=player,result=False))
         total_gd = merge_dicts(home_gd,away_gd)
         
-        player_table = build_table(team_list,[f"{player} Predicted Points",f"{player} Predicted GD"],[total_points,total_gd])
-        player_table = player_table.sort_values(by=[f"{player} Predicted Points",f"{player} Predicted GD"],ascending=False)
+        player_table = build_table(team_list,[f"{player} Points",f"{player} GD"],[total_points,total_gd])
+        player_table = player_table.sort_values(by=[f"{player} Points",f"{player} GD"],ascending=False)
         player_table[f"{player} Position"] = rank_position(player_table["Team"].to_list())
         player_table = player_table.sort_values(by=["Team"])
         player_table[f"{player} Difference"] = actual_table["Actual Position"]-player_table[f"{player} Position"]
 
         # number_cols = len(actual_table.columns)
-        for col in [f"{player} Predicted Points",f"{player} Predicted GD",f"{player} Position",f"{player} Difference"]:
+        for col in [f"{player} Points",f"{player} GD",f"{player} Position",f"{player} Difference"]:
             actual_table[col] = player_table[col]
             
     return actual_table
@@ -216,12 +216,22 @@ class TableFrame():
         self.frame = master_frame
         
         table = predicted_table("2023_24",["Matt","Simon"])         
+        
+        table=table.sort_values(by=["Points","GD"],ascending=False)
+        self.generate_treeview(table)
+        
+    def generate_treeview(self,table:pd.DataFrame):
         columns = table.columns.to_list()
-        self.tree = ttk.Treeview(master_frame,show="headings")
+        self.tree = ttk.Treeview(self.frame,show="headings", columns=columns)
         for i,col in enumerate(columns):
-            self.tree.column(col,index=i+1,width=100,anchor=CENTER)
             self.tree.heading(col,text=col)
+            self.tree.column(col,width=75,anchor=CENTER)
         # Iterate over the rows in the Pandas DataFrame and add each row to the Treeview widget
         for i in range(len(table)):
-            self.tree.insert("", "end", values=table.iloc[i,:].tolist())
-        self.tree.grid(row=0,column=0,sticky="NSEW")
+            if i % 2 == 0:
+                self.tree.insert("", END, values=table.iloc[i,:].tolist(),tags= ('evenrow',))
+            else:
+                self.tree.insert("", END, values=table.iloc[i,:].tolist(),tags = ('oddrow',))
+        self.tree.tag_configure('oddrow', background='white smoke')
+        self.tree.tag_configure('evenrow', background='azure')
+        self.tree.grid(row=0,column=0,sticky="nsew")
