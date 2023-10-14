@@ -55,7 +55,7 @@ class MainApp():
         self.overview.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
         overview_object = OverviewFrame(self.overview)
 
-        self.active_frame = LabelFrame(self.main_window,text="Active Frame",borderwidth=2)
+        self.active_frame = LabelFrame(self.main_window,text="Active Frame",borderwidth=2,padx=frame_padx,pady=frame_pady)
         self.active_frame.grid(
             row=0,
             column=1,

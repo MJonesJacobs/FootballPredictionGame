@@ -5,7 +5,8 @@ from tkinter import *
 from tkinter import ttk
 import pandas as pd
 from copy import deepcopy
-
+from App_Formatting.formatting_conventions import frame_padx, frame_pady
+from tkinter_functions import clear_subframes
 
         
             
@@ -182,9 +183,9 @@ def predicted_table(season:str,players:list[str])->pd.DataFrame:
     home_gd = defualt_dict_update(count_home_gd(season=season,player=players[0]))
     away_gd = defualt_dict_update(count_away_gd(season=season,player=players[0]))
     total_gd = merge_dicts(home_gd,away_gd)
-    actual_table = build_table(team_list,["Games Played","Points","GD"],[total_games,total_points,total_gd])    
-    actual_table = actual_table.sort_values(by=["Points","GD"],ascending=False)
-    actual_table["Actual Position"] = rank_position(actual_table["Team"].to_list())
+    actual_table = build_table(team_list,["Played","Pts","Gd"],[total_games,total_points,total_gd])    
+    actual_table = actual_table.sort_values(by=["Pts","Gd"],ascending=False)
+    actual_table["Position"] = rank_position(actual_table["Team"].to_list())
     actual_table = actual_table.sort_values(by=["Team"])
     player_tables = {key:0 for key in players}
     
@@ -197,32 +198,50 @@ def predicted_table(season:str,players:list[str])->pd.DataFrame:
         away_gd = defualt_dict_update(count_away_gd(season=season,player=player,result=False))
         total_gd = merge_dicts(home_gd,away_gd)
         
-        player_table = build_table(team_list,[f"{player} Points",f"{player} GD"],[total_points,total_gd])
-        player_table = player_table.sort_values(by=[f"{player} Points",f"{player} GD"],ascending=False)
+        player_table = build_table(team_list,[f"{player} Pts",f"{player} Gd"],[total_points,total_gd])
+        player_table = player_table.sort_values(by=[f"{player} Pts",f"{player} Gd"],ascending=False)
         player_table[f"{player} Position"] = rank_position(player_table["Team"].to_list())
         player_table = player_table.sort_values(by=["Team"])
-        player_table[f"{player} Difference"] = actual_table["Actual Position"]-player_table[f"{player} Position"]
+        player_table[f"{player} Diff"] = actual_table["Position"]-player_table[f"{player} Position"]
 
         # number_cols = len(actual_table.columns)
-        for col in [f"{player} Points",f"{player} GD",f"{player} Position",f"{player} Difference"]:
+        for col in [f"{player} Pts",f"{player} Gd",f"{player} Position",f"{player} Diff"]:
             actual_table[col] = player_table[col]
             
     return actual_table
             
 class TableFrame():
+    sorting_options = ["Position","Matt Position","Matt Diff","Simon Position","Simon Diff"]
     def __init__(self,master_frame:Frame) -> None:
-        master_frame.rowconfigure(0,weight=1)
+        master_frame.rowconfigure(0,weight=0)
+        master_frame.rowconfigure(1,weight=1)
         master_frame.columnconfigure(0,weight=1)
-        self.frame = master_frame
+        master_frame.columnconfigure(1,weight=0)
         
-        table = predicted_table("2023_24",["Matt","Simon"])         
+        self.table_frame = Frame(master_frame,padx=frame_padx, pady=frame_pady)
+        self.table_frame.grid(column=0,row=0,rowspan=2,sticky="nsew")
+        self.table_frame.rowconfigure(0,weight=1)
+        self.table_frame.columnconfigure(0,weight=1)
         
-        table=table.sort_values(by=["Points","GD"],ascending=False)
-        self.generate_treeview(table)
+        self.overview_frame = LabelFrame(master_frame,text="Overview",padx=frame_padx, pady=frame_pady)
+        self.overview_frame.grid(column=1,row=1,sticky="nsew")
+        
+        self.sorting_frame = LabelFrame(master_frame,text="Table Editing",padx=frame_padx, pady=frame_pady)
+        self.sorting_frame.grid(column=1,row=0,sticky="nsew")
+        self.sorting_frame.columnconfigure(0,weight=1)
+        
+        self.table = predicted_table("2023_24",["Matt","Simon"])         
+        
+        self.table=self.table.sort_values(by=["Pts","Gd"],ascending=False)
+        self.generate_treeview(self.table)
+        self.generate_sorting_frame()
+        self.generate_overview()
         
     def generate_treeview(self,table:pd.DataFrame):
         columns = table.columns.to_list()
-        self.tree = ttk.Treeview(self.frame,show="headings", columns=columns)
+        s = ttk.Style()
+        s.configure('Treeview', rowheight=45)
+        self.tree = ttk.Treeview(self.table_frame,show="headings", columns=columns)
         for i,col in enumerate(columns):
             self.tree.heading(col,text=col)
             self.tree.column(col,width=75,anchor=CENTER)
@@ -233,5 +252,55 @@ class TableFrame():
             else:
                 self.tree.insert("", END, values=table.iloc[i,:].tolist(),tags = ('oddrow',))
         self.tree.tag_configure('oddrow', background='white smoke')
-        self.tree.tag_configure('evenrow', background='azure')
+        self.tree.tag_configure('evenrow', background='snow')
         self.tree.grid(row=0,column=0,sticky="nsew")
+        
+    def generate_sorting_frame(self):
+        self.sort_option = StringVar()
+        self.sort_option.set(self.sorting_options[0])
+        
+        for number,option in enumerate(self.sorting_options):
+            radio_button = ttk.Radiobutton(self.sorting_frame, text=option, variable=self.sort_option, value=option)
+            radio_button.grid(column=0,row=number, padx=frame_padx,pady=frame_pady,sticky="W")
+            self.sorting_frame.rowconfigure(number,weight=0)
+        
+        self.sort_option.trace("w",self.trace_sort)
+    
+    def generate_overview(self):
+        
+        label = Label(self.overview_frame,text="Total Difference")
+        label.grid(row=2,column=0)
+        
+        # Generate Names
+        for i,player in enumerate(["Matt","Simon"]):
+            name_label = Label(self.overview_frame,text=player)
+            name_label.grid(row=0,column=i+1)
+            
+            total_score_label = Label(self.overview_frame,text=f"{self.difference_score(player)}")
+            total_score_label.grid(row=2,column=i+1)
+        
+        # Seperators
+        for row_num in [1,3]:
+            sep = ttk.Separator(self.overview_frame,orient="horizontal")
+            sep.grid(row=row_num,column=0,columnspan=3,sticky="ew",pady=5,padx=5)
+        
+        
+        pass
+    
+    def difference_score(self,player:str):
+        # Get the absolute value of each element in the column 'A'
+        abs_difference = self.table[f'{player} Diff'].abs()
+
+        # Calculate the sum of the absolute values
+        sum_abs_A = abs_difference.sum()   
+        return int(sum_abs_A)      
+    
+    def destroy_treeview(self):
+        clear_subframes(self.table_frame)
+    
+    def trace_sort(self,*args):
+        ascend_bool = True if any(x in self.sort_option.get() for x in ["Position","Diff"]) else False
+        self.destroy_treeview()
+        self.table = self.table.sort_values(by=self.sort_option.get(),ascending=ascend_bool)
+        self.generate_treeview(self.table)
+        print(self.sort_option.get())
