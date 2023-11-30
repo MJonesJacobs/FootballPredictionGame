@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from typing import Any
-from db_link import player_list, DB_CURSOR, DB_CONNECTION
+from db_link import player_list, current_gameweek, DB_CURSOR, DB_CONNECTION
 from tkinter_functions import clear_subframes
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from web_scrape import get_gw_info, FixtureData
@@ -177,25 +177,25 @@ class ResultRow():
         frame.rowconfigure(master_row,weight=1)
         
         self.home_logo = TeamImage(self.hometeam)
-        self.home_logo_label = ttk.Label(frame,image=self.home_logo.photoimage,anchor=CENTER)
+        self.home_logo_label = ttk.Label(frame,image=self.home_logo.photoimage,anchor=CENTER,width=10)
         self.home_logo_label.grid(row = self.row,column=1,sticky="nsew",padx=5,pady=5)
         home_label = Label(frame, text=self.hometeam,width=15,justify="right")
         home_label.grid(row = self.row,column=2,sticky="nsew",padx=5,pady=5)
         
-        self.home_result_label = Label(frame,text=f"{self.home_result}") 
+        self.home_result_label = Label(frame,text=f"{self.home_result}",width=10) 
         self.home_result_label.grid(row = self.row,column=3,padx=5,pady=5)
         
-        dash = Label(frame,text=" - ",width=10)
+        dash = Label(frame,text=" - ",width=5)
         dash.grid(row = self.row,column=4,sticky="nsew",padx=5,pady=5)
         
-        self.away_result_label = Label(frame,text=f"{self.away_result}") 
+        self.away_result_label = Label(frame,text=f"{self.away_result}",width=10) 
         self.away_result_label.grid(row = self.row,column=5,padx=5,pady=5)
         
         away_label = Label(frame, text=self.awayteam,width=15,justify="left")
         away_label.grid(row = self.row,column=6,sticky="nsew",padx=5,pady=5)
         
         self.away_logo = TeamImage(self.awayteam)
-        self.away_logo_label = ttk.Label(frame,image=self.away_logo.photoimage,anchor=CENTER)
+        self.away_logo_label = ttk.Label(frame,image=self.away_logo.photoimage,anchor=CENTER,width=10)
         self.away_logo_label.grid(row = self.row,column=7,sticky="nsew",padx=5,pady=5)
         
         self.score_label = Label(frame, text=f"Score: {self.score}",width=15,justify="center")
@@ -212,6 +212,7 @@ class AllGameweekResults():
 class ManualPredictionInput():
     def __init__(self,master:Frame) -> None:
         
+        next_gw = current_gameweek()
         # Create Frames
         self.index = LabelFrame(master,text="Index")
         self.predictions = LabelFrame(master,text="Predictions")
@@ -246,8 +247,9 @@ class ManualPredictionInput():
         
         self.selected_player = StringVar()
         default_players = [x[0] for x in player_list()]
-        default_players.insert(0,"Select Player")
+        default_players.insert(0,"")
         self.player_option = ttk.OptionMenu(self.player_frame,self.selected_player,*default_players)
+        self.selected_player.set(default_players[1])
         self.player_option.config(width=20)
         self.player_option.grid(row=0,column=1,sticky="w")
         
@@ -258,7 +260,11 @@ class ManualPredictionInput():
         self.selected_gameweek.set(1)
         self.gw_spinbox = ttk.Spinbox(self.gw_frame,textvariable=self.selected_gameweek,width=10, values=[str(x) for x in range(1,39)])
         self.gw_spinbox.grid(row=0,column=1,sticky="w")
+        
+        self.selected_player.trace(mode="w",callback=self.update_prediction_fixtures)
+        self.selected_gameweek.trace(mode="w",callback=self.update_prediction_fixtures)
 
+        self.selected_gameweek.set(next_gw)
         
         #-----------------------------------------------------------#
         #                       Button Section                      #
@@ -267,8 +273,8 @@ class ManualPredictionInput():
         self.buttons.columnconfigure(0,weight=1)
         self.buttons.columnconfigure(1,weight=1)
         
-        self.update_button = ttk.Button(self.buttons,text="Update Fixtures",width=30,command=self.update_prediction_fixtures)
-        self.update_button.grid(row=0,column=0)
+        # self.update_button = ttk.Button(self.buttons,text="Update Fixtures",width=30,command=self.update_prediction_fixtures)
+        # self.update_button.grid(row=0,column=0)
         
         self.commit_button = ttk.Button(self.buttons,text="Commit Predictions",width=30,command=self.commit_predictions)
         self.commit_button.grid(row=0,column=1)

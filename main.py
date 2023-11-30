@@ -7,6 +7,7 @@ from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from tkinter_functions import clear_subframes
 from manual_input import ManualPredictionInput
 from SimulatedTable import TableFrame
+from graphs import GraphFrame
 from automatic_result_upload import update_results, update_scores, OverviewFrame
 
 MAIN_DIR = os.getcwd()
@@ -47,9 +48,13 @@ class MainApp():
         
 
         prediction_radio = ttk.Radiobutton(self.radio_frame, text="Prediction Input",variable=self.radio_selection,value=1)
-        prediction_radio.grid(column=0,row=0,sticky="w")
+        prediction_radio.grid(column=0,row=0,sticky="w",padx=frame_padx,pady=frame_pady)
+        
         simulated_table = ttk.Radiobutton(self.radio_frame, text="Simulated Table",variable=self.radio_selection,value=2)
-        simulated_table.grid(column=0,row=1,sticky="w")
+        simulated_table.grid(column=0,row=1,sticky="w",padx=frame_padx,pady=frame_pady)
+        
+        graphs_radio = ttk.Radiobutton(self.radio_frame, text="Graphs",variable=self.radio_selection,value=3)
+        graphs_radio.grid(column=0,row=2,sticky="w",padx=frame_padx,pady=frame_pady)
 
         self.overview = LabelFrame(self.main_window,text="Overview")
         self.overview.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
@@ -64,7 +69,7 @@ class MainApp():
             pady=frame_pady,
             rowspan=2
         )
-
+        self.radio_selection.set(1)
 
         # Start the main loop
         self.main_window.mainloop()
@@ -73,10 +78,15 @@ class MainApp():
     def trace_radio(self,*args):
         print(f"{self.radio_selection.get()}")
         clear_subframes(self.active_frame) # Clears whatever is in active frame
+        
         if self.radio_selection.get() == 1:
             ManualPredictionInput(self.active_frame) # Initialises Prediction Frame
+            
         if self.radio_selection.get() == 2:
-            TableFrame(self.active_frame)
+            TableFrame(self.active_frame) # Initialises Table Frame
+        
+        if self.radio_selection.get() == 3:
+            GraphFrame(self.active_frame)
             
             
            

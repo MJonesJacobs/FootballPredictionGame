@@ -21,8 +21,12 @@ def add_player(name:str,season:str):
             db_push.append(tuple([home[0],away[0],name]))
     DB_CURSOR.executemany("INSERT INTO '2023_24' (HomeTeam, AwayTeam, Player) VALUES (?,?,?)",db_push)
     DB_CONNECTION.commit()
-            
+
+def current_gameweek()->int:
+    return DB_CURSOR.execute(f"SELECT DISTINCT Gameweek  FROM '2023_24' WHERE ResultAdded = 1 ORDER BY Gameweek DESC").fetchall()[0][0]+1      
 
 def player_list():
     player_list = DB_CURSOR.execute("SELECT * FROM 'Player List'").fetchall()
     return player_list
+
+print(current_gameweek())
