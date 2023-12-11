@@ -9,12 +9,13 @@ from tkinter import messagebox
 from TeamLogos import TeamImage
 
 class PredictionRow():
-    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int) -> None:
+    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
         self.row = row
         self.gameweek = gameweek
         self.player = player
         self.hometeam = scape_data.home_team
         self.awayteam = scape_data.away_team
+        self.season = season
         self.home_prediction = IntVar()
         self.home_prediction.trace("w",self.trace_home_prediction)
         self.home_prediction.set(0)
@@ -27,11 +28,11 @@ class PredictionRow():
     # def commit_predictions():
         
     def check_if_record_exists(self):
-        result = DB_CURSOR.execute("SELECT PredictionAdded FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()
+        result = DB_CURSOR.execute("SELECT PredictionAdded FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(self.hometeam,self.awayteam,self.player,self.season)).fetchall()
         return result[0][0] == 1
     
     def get_existing_predictions(self):
-        return DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0]
+        return DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(self.hometeam,self.awayteam,self.player,self.season)).fetchall()[0]
     
     def input_frame(self,frame:Frame,master_row:int)->Frame:
         
@@ -109,13 +110,13 @@ class PredictionRow():
     
     @property
     def db_values(self)->tuple:
-        return(self.home_prediction.get(),self.away_prediction.get(),self.gameweek,1,self.hometeam,self.awayteam,self.player)
+        return(self.home_prediction.get(),self.away_prediction.get(),self.gameweek,1,self.hometeam,self.awayteam,self.player,self.season)
     
 class AllGameweekPredictions():
-    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str,start_row:int) -> None:
+    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str,start_row:int,season:str) -> None:
         self.all_rows = list()
         for row,fixture in enumerate(fixture_data):
-            fixture_input = PredictionRow(player,gameweek,fixture,start_row+row)
+            fixture_input = PredictionRow(player,gameweek,fixture,start_row+row,season)
             fixture_input.input_frame(master_frame,start_row+row)
             self.all_rows.append(fixture_input)
     
@@ -125,7 +126,7 @@ class AllGameweekPredictions():
         
         values = tuple([x.db_values for x in self.override_active()])
         
-        DB_CURSOR.executemany(f"UPDATE '{table}' SET HomePrediction = ?, AwayPrediction = ?, Gameweek = ?, PredictionAdded = ? WHERE HomeTeam = ? AND AwayTeam = ? AND Player = ?",values)
+        DB_CURSOR.executemany(f"UPDATE '{table}' SET HomePrediction = ?, AwayPrediction = ?, Gameweek = ?, PredictionAdded = ? WHERE HomeTeam = ? AND AwayTeam = ? AND Player = ? AND season = ?",values)
         DB_CONNECTION.commit()
     
     def check_scores(self):
@@ -140,12 +141,13 @@ class AllGameweekPredictions():
         return out
         
 class ResultRow():
-    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int) -> None:
+    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
         self.row = row
         self.gameweek = gameweek
         self.player = player
         self.hometeam = scape_data.home_team
         self.awayteam = scape_data.away_team
+        self.season = season
         # self.home_prediction = IntVar()
         
         self.home_prediction, self.away_prediction = self.get_existing_predictions()
@@ -154,21 +156,21 @@ class ResultRow():
         self.score = self.get_points()
         
     def check_if_result_Added(self):
-        result = DB_CURSOR.execute("SELECT ResultAdded FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()
+        result = DB_CURSOR.execute("SELECT ResultAdded FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(self.hometeam,self.awayteam,self.player,self.season)).fetchall()
         return result[0][0] == 1
     
     def get_existing_predictions(self):
-        return DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0]
+        return DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(self.hometeam,self.awayteam,self.player,self.season)).fetchall()[0]
     
     def get_existing_results(self):
         if self.check_if_result_Added():
-            return DB_CURSOR.execute("SELECT HomeScore, AwayScore FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0]
+            return DB_CURSOR.execute("SELECT HomeScore, AwayScore FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(self.hometeam,self.awayteam,self.player,self.season)).fetchall()[0]
         else:
             return ("TBC","TBC")
         
     def get_points(self):
         if self.check_if_result_Added():
-            return DB_CURSOR.execute("SELECT Points FROM '2023_24' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ?",(self.hometeam,self.awayteam,self.player)).fetchall()[0][0]
+            return DB_CURSOR.execute("SELECT Points FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(self.hometeam,self.awayteam,self.player,self.season)).fetchall()[0][0]
         else:
             return "NA"
         
@@ -202,17 +204,17 @@ class ResultRow():
         self.score_label.grid(row=self.row,column=9,sticky="nsew",padx=5,pady=5)
     
 class AllGameweekResults():
-    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str,start_row:int) -> None:
+    def __init__(self,fixture_data:list[FixtureData],player:str,master_frame:Frame,gameweek:str,start_row:int,season:str) -> None:
         self.all_rows = list()
         for row,fixture in enumerate(fixture_data):
-            fixture_input = ResultRow(player,gameweek,fixture,start_row+row)
+            fixture_input = ResultRow(player,gameweek,fixture,start_row+row,season)
             fixture_input.input_frame(master_frame,start_row+row)
             self.all_rows.append(fixture_input)
 
 class ManualPredictionInput():
-    def __init__(self,master:Frame) -> None:
-        
-        next_gw = current_gameweek()
+    def __init__(self,master:Frame, season:str) -> None:
+        self.season = season
+        next_gw = current_gameweek(season)[0]
         # Create Frames
         self.index = LabelFrame(master,text="Index")
         self.predictions = LabelFrame(master,text="Predictions")
@@ -308,7 +310,7 @@ class ManualPredictionInput():
     def generate_predictions(self):
         
         # Fetch Gameweek Fixtures
-        gw_data = get_gw_info(self.gameweek)
+        gw_data = get_gw_info(self.season,self.gameweek)
         
         # # Generate Frame Headers
         
@@ -332,8 +334,8 @@ class ManualPredictionInput():
             for col in [0,8,10]:
                 frame.columnconfigure(col,weight=1)
         
-        self.prediction_row = AllGameweekPredictions(gw_data,self.player,self.predictions,self.gameweek,0)
-        self.result_row = AllGameweekResults(gw_data,self.player,self.result,self.gameweek,0)
+        self.prediction_row = AllGameweekPredictions(gw_data,self.player,self.predictions,self.gameweek,0,season=self.season)
+        self.result_row = AllGameweekResults(gw_data,self.player,self.result,self.gameweek,0,season=self.season)
         
         
         
