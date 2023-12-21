@@ -42,6 +42,10 @@ class TeamImage():
         # self.image = self.image.resize((new_width,new_height))
         # Create a PhotoImage object
         self.photoimage = ImageTk.PhotoImage(self.image) 
+    
+    def resize_img(self,scale:float):
+        self.image = self.image.resize([int(self.image.width*scale),int(self.image.height*scale)])
+        self.photoimage = ImageTk.PhotoImage(self.image) 
 
 
 # for key,im_path in LOGOS.items():
