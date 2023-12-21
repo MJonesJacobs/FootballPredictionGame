@@ -131,6 +131,7 @@ class OverviewFrame():
                 score_label.grid(row=i+4,column=ii+1)
                 
                 cumulative_score = total_score_upto_gw(self.season,name,gw)
+                cumulative_score = total_score_upto_gw(self.season,name,gw)
                 cumulative_score_label = Label(master,text=str(cumulative_score),justify="center",padx=5,pady=2)
                 cumulative_score_label.grid(row=i+10,column=ii+1)
         

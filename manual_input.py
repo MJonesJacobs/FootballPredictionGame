@@ -10,6 +10,7 @@ from TeamLogos import TeamImage
 
 class PredictionRow():
     def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
+    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
         self.row = row
         self.gameweek = gameweek
         self.player = player
