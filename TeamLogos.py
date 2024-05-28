@@ -24,7 +24,10 @@ LOGOS = {
     "Sheffield Utd":r"TeamLogos\SheffieldUtd.png",
     "Spurs":r"TeamLogos\Spurs.png",
     "West Ham":r"TeamLogos\WestHam.png",
-    "Wolves":r"TeamLogos\Wolves.png"
+    "Wolves":r"TeamLogos\Wolves.png",
+    "Leicester":r"Teamlogos\Leicester.png",
+    "Ipswich":r"Teamlogos\Ipswich.png",
+    "Southampton":r"Teamlogos\Southampton.png"
 }
 
 class TeamImage():
@@ -32,15 +35,6 @@ class TeamImage():
         # Load the PNG image
         self.image = Image.open(Path(LOGOS[team]))
         
-        # original_width,original_height = self.image.size
-        # new_height = 40
-        # scale = new_height/original_height
-        # new_width = original_width*scale
-        # new_height = round(new_height)
-        # new_width = round(new_width)
-        
-        # self.image = self.image.resize((new_width,new_height))
-        # Create a PhotoImage object
         self.photoimage = ImageTk.PhotoImage(self.image) 
     
     def resize_img(self,scale:float):
@@ -48,14 +42,27 @@ class TeamImage():
         self.photoimage = ImageTk.PhotoImage(self.image) 
 
 
-# for key,im_path in LOGOS.items():
-#     image = Image.open(Path(im_path))
-#     original_width,original_height = image.size
-#     new_height = 40
-#     scale = new_height/original_height
-#     new_width = original_width*scale
-#     new_height = round(new_height)
-#     new_width = round(new_width)
-#     image = image.resize((new_width,new_height))
-#     image.save(Path(im_path))
-    
+
+
+
+def process_image(image_path):
+    "This method is use to resize the team logos used in the application - This should be used only when adding new images into the app at the start of each season"
+    # Open the image file
+    img = Image.open(image_path).convert("RGBA")
+
+    # Remove blank space around the image
+    bbox = img.getbbox()
+    img = img.crop(bbox)
+
+    # Scale to 40 pixel height
+    width, height = img.size
+    new_height = 40
+    new_width  = int(new_height * width / height)
+    img = img.resize((new_width, new_height), Image.LANCZOS)
+
+    # Make the image 50 pixel wide by adding blank space
+    final_width = 50
+    result = Image.new("RGBA", (final_width, new_height), (0, 0, 0, 0))  # Create a new image with transparent background
+    result.paste(img, ((final_width - new_width) // 2, 0))  # Paste the scaled image onto the new image
+
+    return result

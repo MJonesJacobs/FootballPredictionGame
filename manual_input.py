@@ -10,7 +10,6 @@ from TeamLogos import TeamImage
 
 class PredictionRow():
     def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
-    def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
         self.row = row
         self.gameweek = gameweek
         self.player = player
@@ -261,7 +260,7 @@ class ManualPredictionInput():
         
         self.selected_gameweek = IntVar()
         self.selected_gameweek.set(1)
-        self.gw_spinbox = ttk.Spinbox(self.gw_frame,textvariable=self.selected_gameweek,width=10, values=[str(x) for x in range(1,39)])
+        self.gw_spinbox = ttk.Spinbox(self.gw_frame,textvariable=self.selected_gameweek,width=10, from_=1, to=38,increment=1,wrap=True,)
         self.gw_spinbox.grid(row=0,column=1,sticky="w")
         
         self.selected_player.trace(mode="w",callback=self.update_prediction_fixtures)

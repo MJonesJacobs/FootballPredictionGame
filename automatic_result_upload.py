@@ -39,7 +39,8 @@ def update_results(season:str):
     # Get all gameweeks with missing resuts
     gameweeks = set(range(1,39))
     missing_gws = list(set([x[0] for x in DB_CURSOR.execute("SELECT DISTINCT Gameweek FROM 'Results' WHERE season = ? AND ResultAdded = 0",(season,)).fetchall()]))
-    missing_gws.remove(None)
+    if None in missing_gws:
+        missing_gws.remove(None)
     missing_gws.sort()
 
     gws_to_add = list()

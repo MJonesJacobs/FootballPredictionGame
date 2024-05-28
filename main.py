@@ -1,4 +1,4 @@
-from db_link import DB_CONNECTION, DB_CURSOR,CURRENT_SEASON, all_seasons
+from db_link import DB_CONNECTION, DB_CURSOR,CURRENT_SEASON, SEASON_LIST
 # from predication_emails import send_fixtures, read_predictions
 from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label
 import os
@@ -14,7 +14,6 @@ MAIN_DIR = os.getcwd()
 
 class MainApp():
     def __init__(self) -> None:
-        
         self.main_window = Tk()
         self.main_window.call("source",MAIN_DIR+r"\theme\azure.tcl")
         self.main_window.call("set_theme", "light")
@@ -22,7 +21,6 @@ class MainApp():
         scrnheight= self.main_window.winfo_screenheight()
         self.main_window.geometry("%dx%d" % (0.85*scrnwidth, 0.9*scrnheight))
         self.main_window.state('zoomed')
-
 
         scrnwidth= self.main_window.winfo_screenwidth()
         scrnheight= self.main_window.winfo_screenheight()
@@ -43,7 +41,7 @@ class MainApp():
         )      
 
         self.season_var = StringVar()
-        season_values=all_seasons()
+        season_values=SEASON_LIST
         season_label = Label(master=self.season_frame,text="Season:")
         season_label.grid(row=0,column=0,sticky="e",padx=frame_padx,pady=frame_pady)
         self.season_opt_menu = ttk.OptionMenu(self.season_frame,self.season_var,*season_values)
