@@ -20,7 +20,10 @@ DB_TEAM_NAMES = ["Nott'm Forest",
                  "Crystal Palace",
                  "Arsenal",
                  "Burnley",
-                 "Luton"]
+                 "Luton",
+                 "Ipswich Town",
+                 "Leicester City",
+                 "Southampton"]
 
 KNOWN_TRANSLATIONS = {
     "Nott'ham Forest":"Nott'm Forest",

@@ -46,8 +46,52 @@ def current_gameweek(season:str)->[int,bool]:
     else:   # All results are added in highes gw so next gameweek is current but nbot started yet maximum gameweek number is 39
         return [min(highest_gw + 1,38),False]
 
+def initiate_new_season(season:str,team_list:list[str],player_list:list[str]):
+    """
+    CAUTION - METHOD ALTERS DB SO ENSURE BACK UP BEFORE USE
+    
+    Populate DB with team fixtures names, player and season ready for new season
+    """
+    db_push = list()
+    for name in player_list:  
+        for home in team_list:
+            for away in team_list:
+                if home == away:
+                    continue # Avoids team facing itself
+                db_push.append(tuple([home,away,name,season]))
+    DB_CURSOR.executemany("INSERT INTO 'Results' (HomeTeam, AwayTeam, Player, Season) VALUES (?,?,?,?)",db_push)
+    DB_CONNECTION.commit()
 
-
+# DEFINES GLOBAL VARIABLES at Main.py Import
 CURRENT_GAMEWEEK,PARTIAL_GAMEWEEKS = current_gameweek(season=CURRENT_SEASON)
 print(f"{CURRENT_GAMEWEEK=}")
 print(f"{PARTIAL_GAMEWEEKS=}")
+
+# if __name__ == "__main__":
+    # initiate_new_season(
+    #     season="24/25",
+    #     team_list=[
+    #         "Fulham",
+    #         "Brentford",
+    #         "Liverpool",
+    #         "Bournemouth",
+    #         "Wolves",
+    #         "Brighton",
+    #         "Spurs",
+    #         "Man Utd",
+    #         "Man City",
+    #         "Newcastle",
+    #         "Aston Villa",
+    #         "Everton",
+    #         "West Ham",
+    #         "Chelsea",
+    #         "Crystal Palace",
+    #         "Arsenal",
+    #         "Burnley",
+    #         "Ipswich Town",
+    #         "Leicester City",
+    #         "Southampton"],
+    #     player_list=[
+    #         "Matt",
+    #         "Simon"
+    #     ])
