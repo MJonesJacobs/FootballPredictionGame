@@ -1,7 +1,40 @@
-
-from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label, Frame
+from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label, Frame, CENTER
 from db_link import player_list, CURRENT_GAMEWEEK
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
+from web_scrape import get_gw_info, FixtureData
+from TeamLogos import TeamImage
+from tkinter_functions import clear_subframes
+
+class ResultRow():
+    def __init__(self,fixture:FixtureData) -> None:
+        self.fixture_data = fixture
+        
+    def display_frame(self,master:Frame,row:int):
+
+        
+        self.home_logo = TeamImage(self.fixture_data.home_team)
+        self.home_logo_label = ttk.Label(master,image=self.home_logo.photoimage,anchor=CENTER)
+        self.home_logo_label.grid(row = row,column=1,sticky="nsew",padx=5,pady=5)
+        
+        home_label = Label(master, text=self.fixture_data.home_team,width=15,justify="right")
+        home_label.grid(row = row,column=2,sticky="nsew",padx=5,pady=5)
+        
+        
+        self.home_result_label = Label(master,text=f"{self.fixture_data.home_score}",width=10) 
+        self.home_result_label.grid(row = row,column=3,padx=5,pady=5)
+        
+        dash = Label(master,text=" - ",width=5)
+        dash.grid(row = row,column=4,sticky="nsew",padx=5,pady=5)
+        
+        self.away_result_label = Label(master,text=f"{self.fixture_data.away_score}",width=10) 
+        self.away_result_label.grid(row = row,column=5,padx=5,pady=5)
+        
+        away_label = Label(master, text=self.fixture_data.away_team,width=15,justify="left")
+        away_label.grid(row = row,column=6,sticky="nsew",padx=5,pady=5)
+        
+        self.away_logo = TeamImage(self.fixture_data.away_team)
+        self.away_logo_label = ttk.Label(master,image=self.away_logo.photoimage,anchor=CENTER,width=10)
+        self.away_logo_label.grid(row = row,column=7,sticky="nsew",padx=5,pady=5)
 
 class GameweekComaparison():
     def __init__(self,master:Frame, season:str) -> None:
@@ -18,16 +51,16 @@ class GameweekComaparison():
         # Weight Frames
         master.rowconfigure(0,weight=0)
         master.rowconfigure(1,weight=1)
-        master.columnconfigure(0,weight=1)
+        master.columnconfigure(0,weight=0)
         master.columnconfigure(1,weight=1)
-        master.columnconfigure(2,weight=1)
+        master.columnconfigure(2,weight=0)
         
         # Grid Frames
         self.gw_select_Frame.grid(row=0,column=1,sticky="nsew",padx=frame_padx,pady=frame_pady)
         self.player1_input_Frame.grid(row=0,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
         self.player2_input_Frame.grid(row=0,column=2,sticky="nsew",padx=frame_padx,pady=frame_pady)
 
-        self.actual_scores_Frame.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
+        self.actual_scores_Frame.grid(row=1,column=1,sticky="nsew",padx=frame_padx,pady=frame_pady)
         self.player1_prediction_Frame.grid(row=1,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
         self.player2_prediction_Frame.grid(row=1,column=2,sticky="nsew",padx=frame_padx,pady=frame_pady)
        
@@ -61,11 +94,27 @@ class GameweekComaparison():
         self.player2.set(default_players[2])
         self.player2.trace_add(mode="write",callback=self.trace_player2)
 
-    
+        self.generate_gw_results()
+
+    def generate_gw_results(self):
+        "Generates the list of results with team name, logos and result to be shown in actual score frame"
+        clear_subframes(self.actual_scores_Frame)
+
+        # Retrieve Scores
+
+        gw_data = get_gw_info(self.season,self.selected_gameweek.get())
+        self.rows = list()
+        for i,fixture in enumerate(gw_data):
+            self.actual_scores_Frame.rowconfigure(i,weight=1)
+            game = ResultRow(fixture)
+            self.rows.append(game)
+            game.display_frame(self.actual_scores_Frame,i)
+
     def trace_GW(self,*args):
         # Update Results
         print("Gameweek Updated - New Results Added")
 
+        self.generate_gw_results()
         # Update Player Predictions
         self.trace_player1()
         self.trace_player2()
