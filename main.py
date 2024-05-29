@@ -8,6 +8,7 @@ from manual_input import ManualPredictionInput
 from SimulatedTable import TableFrame
 from graphs import GraphFrame
 from team_dashboard import TeamDashboard
+from gameweek_comparison import GameweekComaparison
 from automatic_result_upload import update_results, update_scores, OverviewFrame
 
 MAIN_DIR = os.getcwd()
@@ -65,14 +66,19 @@ class MainApp():
         prediction_radio = ttk.Radiobutton(self.radio_frame, text="Prediction Input",variable=self.radio_selection,value=1)
         prediction_radio.grid(column=0,row=0,sticky="w",padx=frame_padx,pady=frame_pady)
 
+        gw_comp_radio = ttk.Radiobutton(self.radio_frame, text="Gameweek Comparison",variable=self.radio_selection,value=5)
+        gw_comp_radio.grid(column=0,row=1,sticky="w",padx=frame_padx,pady=frame_pady)
+
         team_dashboard_radio = ttk.Radiobutton(self.radio_frame, text="Team Dashboard",variable=self.radio_selection,value=4)
-        team_dashboard_radio.grid(column=0,row=1,sticky="w",padx=frame_padx,pady=frame_pady)
+        team_dashboard_radio.grid(column=0,row=2,sticky="w",padx=frame_padx,pady=frame_pady)
         
         simulated_table = ttk.Radiobutton(self.radio_frame, text="Simulated Table",variable=self.radio_selection,value=2)
-        simulated_table.grid(column=0,row=2,sticky="w",padx=frame_padx,pady=frame_pady)
+        simulated_table.grid(column=0,row=3,sticky="w",padx=frame_padx,pady=frame_pady)
         
         graphs_radio = ttk.Radiobutton(self.radio_frame, text="Graphs",variable=self.radio_selection,value=3)
-        graphs_radio.grid(column=0,row=3,sticky="w",padx=frame_padx,pady=frame_pady)
+        graphs_radio.grid(column=0,row=4,sticky="w",padx=frame_padx,pady=frame_pady)
+
+        
 
         self.overview = LabelFrame(self.main_window,text="Overview")
         self.overview.grid(row=2,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
@@ -131,6 +137,9 @@ class MainApp():
 
         if self.radio_selection.get() == 4:
             TeamDashboard(self.active_frame,self.season)
+        
+        if self.radio_selection.get() == 5:
+            GameweekComaparison(self.active_frame,self.season)
             
             
            
