@@ -41,7 +41,10 @@ class TeamImage():
         self.image = self.image.resize([int(self.image.width*scale),int(self.image.height*scale)])
         self.photoimage = ImageTk.PhotoImage(self.image) 
 
-
+class PlaceholderImage():
+    def __init__(self) -> None:
+        self.image = Image.open(Path("placeholder.png"))
+        self.photoimage = ImageTk.PhotoImage(self.image) 
 
 
 
@@ -66,3 +69,13 @@ def process_image(image_path):
     result.paste(img, ((final_width - new_width) // 2, 0))  # Paste the scaled image onto the new image
 
     return result
+
+def gen_placeholder():
+    # Create a new RGBA image with a transparent background
+    img = Image.new('RGBA', (1, 40), (255, 255, 255, 0))
+
+    # Save the image as a PNG file
+    img.save('placeholder.png', 'PNG')
+
+
+gen_placeholder()

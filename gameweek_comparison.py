@@ -1,8 +1,8 @@
 from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label, Frame, CENTER
-from db_link import player_list, CURRENT_GAMEWEEK
+from db_link import player_list, CURRENT_GAMEWEEK, PredictionData
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from web_scrape import get_gw_info, FixtureData
-from TeamLogos import TeamImage
+from TeamLogos import TeamImage, PlaceholderImage
 from tkinter_functions import clear_subframes
 
 class ResultRow():
@@ -10,8 +10,7 @@ class ResultRow():
         self.fixture_data = fixture
         
     def display_frame(self,master:Frame,row:int):
-
-        
+       
         self.home_logo = TeamImage(self.fixture_data.home_team)
         self.home_logo_label = ttk.Label(master,image=self.home_logo.photoimage,anchor=CENTER)
         self.home_logo_label.grid(row = row,column=1,sticky="nsew",padx=5,pady=5)
@@ -36,24 +35,57 @@ class ResultRow():
         self.away_logo_label = ttk.Label(master,image=self.away_logo.photoimage,anchor=CENTER,width=10)
         self.away_logo_label.grid(row = row,column=7,sticky="nsew",padx=5,pady=5)
 
+class PlayerPointRow():
+    def __init__(self,fixture:FixtureData,player:str,reversed:bool) -> None:
+        self.prediction_info = PredictionData(fixture,player)
+        self.col_order = [0,1,2,3,4]
+        self.reversed = reversed
+        if reversed:
+            self.col_order.reverse()
+        
+    def display_frame(self,master:Frame,row:int):
+        justification = "left" if self.reversed else "right"
+        self.placeholder = PlaceholderImage()
+        self.placeholder_image = ttk.Label(master,image=self.placeholder.photoimage,anchor=CENTER)
+        self.placeholder_image.grid(row = row,column=self.col_order[0],sticky="nsew",padx=5,pady=5)
+        master.columnconfigure(self.col_order[0],weight=0)
+        
+        score_label = Label(master, text=": Score" if self.reversed else "Score :",width=10,justify=justification)
+        score_label.grid(row = row,column=self.col_order[1],sticky="nsew",padx=5,pady=5)
+        master.columnconfigure(self.col_order[1],weight=1)
+        
+        
+        self.points_label = Label(master,text=f"{self.prediction_info.points}",width=10) 
+        self.points_label.grid(row = row,column=self.col_order[2],padx=5,pady=5)
+        master.columnconfigure(self.col_order[2],weight=1)
+
+        self.prediction_label = Label(master, text=": Prediction" if self.reversed else " Prediction :",width=15,justify=justification)
+        self.prediction_label.grid(row = row,column=self.col_order[3],sticky="nsew",padx=5,pady=5)
+        master.columnconfigure(self.col_order[3],weight=1)
+                
+        self.prediction_label = Label(master,text=f"{self.prediction_info.home_prediction} - {self.prediction_info.away_prediction}",width=5) 
+        self.prediction_label.grid(row = row,column=self.col_order[4],padx=5,pady=5)
+        master.columnconfigure(self.col_order[4],weight=1)
+
+
 class GameweekComaparison():
     def __init__(self,master:Frame, season:str) -> None:
         self.season = season
         
         # Create Frames
         self.gw_select_Frame = Frame(master,bd=5)
-        self.actual_scores_Frame = Frame(master,bd=5)
+        self.actual_scores_Frame = LabelFrame(master,text="Results")
         self.player1_input_Frame = Frame(master,bd=5)
         self.player2_input_Frame = Frame(master,bd=5)
-        self.player1_prediction_Frame = Frame(master,bd=5)
-        self.player2_prediction_Frame = Frame(master,bd=5)
+        self.player1_prediction_Frame = LabelFrame(master,text="Player Prediction")
+        self.player2_prediction_Frame = LabelFrame(master,text="Player Prediction")
         
         # Weight Frames
         master.rowconfigure(0,weight=0)
         master.rowconfigure(1,weight=1)
-        master.columnconfigure(0,weight=0)
-        master.columnconfigure(1,weight=1)
-        master.columnconfigure(2,weight=0)
+        master.columnconfigure(0,weight=1)
+        master.columnconfigure(1,weight=0)
+        master.columnconfigure(2,weight=1)
         
         # Grid Frames
         self.gw_select_Frame.grid(row=0,column=1,sticky="nsew",padx=frame_padx,pady=frame_pady)
@@ -94,7 +126,7 @@ class GameweekComaparison():
         self.player2.set(default_players[2])
         self.player2.trace_add(mode="write",callback=self.trace_player2)
 
-        self.generate_gw_results()
+        self.trace_GW()
 
     def generate_gw_results(self):
         "Generates the list of results with team name, logos and result to be shown in actual score frame"
@@ -102,9 +134,9 @@ class GameweekComaparison():
 
         # Retrieve Scores
 
-        gw_data = get_gw_info(self.season,self.selected_gameweek.get())
+        self.gw_data = get_gw_info(self.season,self.selected_gameweek.get())
         self.rows = list()
-        for i,fixture in enumerate(gw_data):
+        for i,fixture in enumerate(self.gw_data):
             self.actual_scores_Frame.rowconfigure(i,weight=1)
             game = ResultRow(fixture)
             self.rows.append(game)
@@ -112,7 +144,6 @@ class GameweekComaparison():
 
     def trace_GW(self,*args):
         # Update Results
-        print("Gameweek Updated - New Results Added")
 
         self.generate_gw_results()
         # Update Player Predictions
@@ -120,10 +151,25 @@ class GameweekComaparison():
         self.trace_player2()
 
     def trace_player1(self,*args):
-        print("player1 prediction update")
+        clear_subframes(self.player1_prediction_Frame)
+        
+        self.player1_rows = list()
+        for i,fixture in enumerate(self.gw_data):
+            self.player1_prediction_Frame.rowconfigure(i,weight=1)
+            game = PlayerPointRow(fixture,self.player1.get(),reversed=False)
+            self.player1_rows.append(game)
+            game.display_frame(self.player1_prediction_Frame,i)
+
 
     def trace_player2(self,*args):
-        print("player2 prediction update")
+        clear_subframes(self.player2_prediction_Frame)
+        
+        self.player2_rows = list()
+        for i,fixture in enumerate(self.gw_data):
+            self.player2_prediction_Frame.rowconfigure(i,weight=1)
+            game = PlayerPointRow(fixture,self.player2.get(),reversed=True)
+            self.player2_rows.append(game)
+            game.display_frame(self.player2_prediction_Frame,i)
 
     # gw_data = get_gw_info(self.season,self.gameweek)
         

@@ -1,11 +1,15 @@
 from dataclasses import dataclass
 import sqlite3
+from typing import Any
 from web_scrape import FixtureData
 
 DB_CONNECTION = sqlite3.connect('Prediction_Game.db')
 DB_CURSOR = DB_CONNECTION.cursor()
 CURRENT_SEASON = "23/24"
 SEASON_LIST = ["23/24"]
+class PredictionData():
+    def __init__(self, fixture:FixtureData,player:str) -> None:
+        self.home_prediction, self.away_prediction, self.points = DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction, Points FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(fixture.home_team,fixture.away_team,player,fixture.season)).fetchall()[0]
 
 def team_list(season:str)->list[str]:
     return [x[0] for x in DB_CURSOR.execute(f"SELECT DISTINCT HomeTeam FROM 'Results' WHERE Season = ?",(season,)).fetchall()]
