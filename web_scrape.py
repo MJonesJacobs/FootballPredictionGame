@@ -5,7 +5,8 @@ import re
 from team_names import convert_team_name
 
 SEASON_URL = {
-    "23/24":'https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures'
+    "23/24":'https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures',
+    "24/25":'https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures'
 }
 
 def is_time(string):
@@ -35,10 +36,9 @@ class FixtureData():
 
 #Import Gameweek Fixtures from
 def gameweek_url(season:str)->str:
-    if season == "23/24":
-        # return f"https://fpl247.com/fixtures/game-week?weekId={gameweek}"
+    try:
         return SEASON_URL[season]
-    else:
+    except:
         raise ValueError("No URL supported for input of non 23/24 season")
 
 def game_week_data(season:str,gameweek:int)->pd.DataFrame:
@@ -51,7 +51,7 @@ def clean_name(name_str:str)->str:
     return " ".join(name_str.split()[:-1])
 
 def extract_score(score_str:str)->list[int,int]|None:
-    if is_time(score_str):
+    if pd.isna(score_str):
         return [None,None]
     else:
         return [int(x) for x in score_str.split("–")]

@@ -2,11 +2,12 @@ from dataclasses import dataclass
 import sqlite3
 from typing import Any
 from web_scrape import FixtureData
+from team_names import DB_TEAM_NAMES
 
 DB_CONNECTION = sqlite3.connect('Prediction_Game.db')
 DB_CURSOR = DB_CONNECTION.cursor()
-CURRENT_SEASON = "23/24"
-SEASON_LIST = ["23/24"]
+CURRENT_SEASON = "24/25"
+SEASON_LIST = ["23/24","24/25"]
 class PredictionData():
     def __init__(self, fixture:FixtureData,player:str) -> None:
         self.home_prediction, self.away_prediction, self.points = DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction, Points FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(fixture.home_team,fixture.away_team,player,fixture.season)).fetchall()[0]
@@ -42,7 +43,12 @@ def current_gameweek(season:str)->[int,bool]:
     if None in gws:
         gws.remove(None)    #Drops Null values
     gws.sort()  # Sort lisr ascending order
-    highest_gw = gws[-1]    # Get highest gw
+
+    if gws == []: # First Week
+        highest_gw = 1
+    else:
+        highest_gw = gws[-1]    # Get highest gw
+    
     result_states = [x[0] for x in DB_CURSOR.execute("SELECT DISTINCT ResultAdded FROM 'Results' WHERE Season = ? AND Gameweek = ?",(season,highest_gw)).fetchall()] # Returns the states of the results will return [1] if all results added or [1,0] if partially
 
     if 0 in result_states:  # Having a 0 means that the gameweek results are not completed meaning it is the current gameweek
@@ -56,6 +62,7 @@ def initiate_new_season(season:str,team_list:list[str],player_list:list[str]):
     
     Populate DB with team fixtures names, player and season ready for new season
     """
+    assert len(team_list) == 20 and all([name in DB_TEAM_NAMES for name in team_list])
     db_push = list()
     for name in player_list:  
         for home in team_list:
@@ -71,31 +78,31 @@ CURRENT_GAMEWEEK,PARTIAL_GAMEWEEKS = current_gameweek(season=CURRENT_SEASON)
 print(f"{CURRENT_GAMEWEEK=}")
 print(f"{PARTIAL_GAMEWEEKS=}")
 
-# if __name__ == "__main__":
-    # initiate_new_season(
-    #     season="24/25",
-    #     team_list=[
-    #         "Fulham",
-    #         "Brentford",
-    #         "Liverpool",
-    #         "Bournemouth",
-    #         "Wolves",
-    #         "Brighton",
-    #         "Spurs",
-    #         "Man Utd",
-    #         "Man City",
-    #         "Newcastle",
-    #         "Aston Villa",
-    #         "Everton",
-    #         "West Ham",
-    #         "Chelsea",
-    #         "Crystal Palace",
-    #         "Arsenal",
-    #         "Burnley",
-    #         "Ipswich Town",
-    #         "Leicester City",
-    #         "Southampton"],
-    #     player_list=[
-    #         "Matt",
-    #         "Simon"
-    #     ])
+if __name__ == "__main__":
+    initiate_new_season(
+        season="24/25",
+        team_list=[
+            "Fulham",
+            "Brentford",
+            "Liverpool",
+            "Bournemouth",
+            "Wolves",
+            "Brighton",
+            "Spurs",
+            "Man Utd",
+            "Man City",
+            "Newcastle",
+            "Aston Villa",
+            "Everton",
+            "West Ham",
+            "Chelsea",
+            "Crystal Palace",
+            "Arsenal",
+            "Ipswich Town",
+            "Leicester City",
+            "Southampton",
+            "Nott'm Forest"],
+        player_list=[
+            "Matt",
+            "Simon"
+        ])

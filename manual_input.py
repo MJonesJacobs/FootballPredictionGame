@@ -7,14 +7,15 @@ from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from web_scrape import get_gw_info, FixtureData
 from tkinter import messagebox
 from TeamLogos import TeamImage
+from team_names import convert_team_name
 
 class PredictionRow():
     def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
         self.row = row
         self.gameweek = gameweek
         self.player = player
-        self.hometeam = scape_data.home_team
-        self.awayteam = scape_data.away_team
+        self.hometeam = convert_team_name(scape_data.home_team)
+        self.awayteam = convert_team_name(scape_data.away_team)
         self.season = season
         self.home_prediction = IntVar()
         self.home_prediction.trace("w",self.trace_home_prediction)

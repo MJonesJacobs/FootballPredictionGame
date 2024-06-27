@@ -25,8 +25,8 @@ LOGOS = {
     "Spurs":r"TeamLogos\Spurs.png",
     "West Ham":r"TeamLogos\WestHam.png",
     "Wolves":r"TeamLogos\Wolves.png",
-    "Leicester":r"Teamlogos\Leicester.png",
-    "Ipswich":r"Teamlogos\Ipswich.png",
+    "Leicester City":r"Teamlogos\Leicester.png",
+    "Ipswich Town":r"Teamlogos\Ipswich.png",
     "Southampton":r"Teamlogos\Southampton.png"
 }
 
