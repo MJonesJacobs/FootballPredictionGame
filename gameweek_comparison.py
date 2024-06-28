@@ -1,5 +1,5 @@
 from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label, Frame, CENTER
-from db_link import player_list, CURRENT_GAMEWEEK, PredictionData
+from db_link import player_list, CURRENT_GAMEWEEK, PredictionData, current_gameweek
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from web_scrape import get_gw_info, FixtureData
 from TeamLogos import TeamImage, PlaceholderImage
@@ -17,8 +17,7 @@ class ResultRow():
         
         home_label = Label(master, text=self.fixture_data.home_team,width=15,justify="right")
         home_label.grid(row = row,column=2,sticky="nsew",padx=5,pady=5)
-        
-        
+                
         self.home_result_label = Label(master,text=f"{self.fixture_data.home_score}",width=10) 
         self.home_result_label.grid(row = row,column=3,padx=5,pady=5)
         
@@ -63,15 +62,20 @@ class PlayerPointRow():
         self.prediction_label.grid(row = row,column=self.col_order[3],sticky="nsew",padx=5,pady=5)
         master.columnconfigure(self.col_order[3],weight=1)
                 
-        self.prediction_label = Label(master,text=f"{self.prediction_info.home_prediction} - {self.prediction_info.away_prediction}",width=5) 
-        self.prediction_label.grid(row = row,column=self.col_order[4],padx=5,pady=5)
+        self.prediction_value_label = Label(
+            master,
+            text=f"{self.prediction_info.home_prediction} - {self.prediction_info.away_prediction}" if self.prediction_info.does_prediction_exist else "N/A",
+            width=5
+            ) 
+        self.prediction_value_label.grid(row = row,column=self.col_order[4],padx=5,pady=5)
         master.columnconfigure(self.col_order[4],weight=1)
 
 
 class GameweekComaparison():
     def __init__(self,master:Frame, season:str) -> None:
         self.season = season
-        
+        next_gw = current_gameweek(season)[0]
+
         # Create Frames
         self.gw_select_Frame = Frame(master,bd=5)
         self.actual_scores_Frame = LabelFrame(master,text="Results")
@@ -104,7 +108,7 @@ class GameweekComaparison():
         self.selected_gameweek = IntVar()
         self.gw_spinbox = ttk.Spinbox(self.gw_select_Frame,textvariable=self.selected_gameweek,width=10, from_=1, to=38,increment=1,wrap=True)
         self.gw_spinbox.grid(row=0,column=1)
-        self.selected_gameweek.set(CURRENT_GAMEWEEK)
+        self.selected_gameweek.set(next_gw)
         self.selected_gameweek.trace_add(mode="write",callback=self.trace_GW)
 
         # Player 1

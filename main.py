@@ -1,4 +1,4 @@
-from db_link import DB_CONNECTION, DB_CURSOR,CURRENT_SEASON, SEASON_LIST
+from db_link import CURRENT_SEASON, SEASON_LIST, current_gameweek
 # from predication_emails import send_fixtures, read_predictions
 from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label
 import os
@@ -42,7 +42,7 @@ class MainApp():
         )      
 
         self.season_var = StringVar()
-        season_values=SEASON_LIST
+        season_values=[""] + [x for x in SEASON_LIST]
         season_label = Label(master=self.season_frame,text="Season:")
         season_label.grid(row=0,column=0,sticky="e",padx=frame_padx,pady=frame_pady)
         self.season_opt_menu = ttk.OptionMenu(self.season_frame,self.season_var,*season_values)
@@ -78,7 +78,6 @@ class MainApp():
         graphs_radio = ttk.Radiobutton(self.radio_frame, text="Graphs",variable=self.radio_selection,value=3)
         graphs_radio.grid(column=0,row=4,sticky="w",padx=frame_padx,pady=frame_pady)
 
-        
 
         self.overview = LabelFrame(self.main_window,text="Overview")
         self.overview.grid(row=2,column=0,sticky="nsew",padx=frame_padx,pady=frame_pady)
@@ -94,8 +93,8 @@ class MainApp():
             pady=frame_pady,
             rowspan=3
         )
-        self.radio_selection.set(1) # Defaults to the prediction input
-
+        self.season_default_radio()
+        
         # Start the main loop
         self.main_window.mainloop()
     
@@ -113,13 +112,27 @@ class MainApp():
             pady=frame_pady,
             rowspan=3
         )
+    def season_default_radio(self):
+        "Function selects either the manual prediction or gameweek comparison to be the default start up screen if all gameweek predictions have been input and the  "
+        gw,partial = current_gameweek(self.season)
+        
+        if partial == True:
+            self.radio_selection.set(5) # If gameweek is partially completed -> open the comparison on app start up
+        elif gw == 38:
+            self.radio_selection.set(5) # If gameweek is new
+        else:
+            self.radio_selection.set(1)
+
+
         
     def trace_season(self,*args):
+        # When Season is altered default the gameweek to latest gameweek
+        self.season_current_gw, self.partial_gw = current_gameweek(self.season)
         if hasattr(self,"overview_object"):
-            clear_subframes(self.overview_object)
-            del self.overview_object
+            del self.overview_object # Deletes over
         self.overview_object = OverviewFrame(self.overview,self.season)
-        self.trace_radio()
+
+        self.season_default_radio()
 
     def trace_radio(self,*args):
         if hasattr(self,"active_frame"):
