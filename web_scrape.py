@@ -23,6 +23,7 @@ class FixtureData():
     date : str
     gameweek : int
     season :str
+    time : str
 
     def __post_init__(self):
         self.home_team = convert_team_name(self.home_team) # Update team name to correct format
@@ -75,10 +76,12 @@ def get_gw_info(season:str,gw_num:int)->list[FixtureData]:
                 home_score=home_score,
                 away_score=away_score,
                 gameweek=gw_num,
-                season=season
+                season=season,
+                time=row["Time"]
             )
         )
-    return output_list
+    sorted_list = sorted(output_list, key = lambda x:(x.date,x.time,x.home_team))
+    return sorted_list
 
 if __name__ == '__main__':
 
