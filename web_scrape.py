@@ -36,6 +36,9 @@ class FixtureData():
     
     def fixture_str(self) -> str:
         return f"{self.home_team} - {self.away_team}"
+    
+    def result_str(self)-> str:
+        return f"{self.home_team} {self.home_score} - {self.away_score} {self.away_team}"
 
     @property
     def db_values(self)->tuple:

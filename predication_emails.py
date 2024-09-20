@@ -50,27 +50,6 @@ def fixture_formatted(gameweek_fixtures:list[list[str]])->str:
         formatted_list.append(f"{home} Vs. {away}")
     return "\n".join(formatted_list)
 
-
-def send_fixtures(player_list:list[str],gameweek:int,gameweek_fixtures:list[list[str]]):
-    subject = f"Premier League Predictions Game - Gameweek {gameweek} Fixtures"
-    body = f"Please return your score results by replying to this email and filling out the spaces in the fixture list:\nGameweek {gameweek} Fixtures:\n{fixture_formatted(gameweek_fixtures)}"
-    for name, player_email in player_list:
-        msg = MIMEMultipart()
-        msg["From"]     = MY_ADDRESS
-        msg["To"]       = player_email
-        msg["subject"]  = subject
-        msg.attach(MIMEText(body,'plain'))
-        text = msg.as_string()
-        try:
-            print("Connecting to Server...")
-            with smtplib.SMTP_SSL(SMTP_SERVER,SMTP_PORT,context=ssl.create_default_context()) as smtp:
-                smtp.login(MY_ADDRESS,PASSCODE)
-                print("Connection Successful!")
-                print(f"Sending Email to {player_email}")
-                smtp.sendmail(MY_ADDRESS,player_email,text)
-                print(f"Email Sent to {player_email}")
-        except Exception as e:
-            print(e)
     
 def read_predictions(gameweek:int):
     connection = imaplib.IMAP4_SSL(IMAP_SERVER)
@@ -87,7 +66,7 @@ def read_predictions(gameweek:int):
 
 def send_completed_predictions_email(season:str,gw:int):
     
-    fixtures = GameweekFixtures("24/25",1)
+    fixtures = GameweekFixtures(season,gw)
     players = ["Matt","Simon"]
     predictions = dict()
     for fixture in fixtures.fixtures:
@@ -131,7 +110,55 @@ def send_completed_predictions_email(season:str,gw:int):
         print(e)
 
 
+def send_completed_results_email(season:str,gw:int):
+    
+    fixtures = GameweekFixtures(season,gw)
+    players = ["Matt","Simon"]
+    predictions = dict()
+    for fixture in fixtures.fixtures:
+        predictions[fixture]={}
+        for player in players:
+            predictions[fixture][player] = PredictionData(fixture,player)
+           
+    #Generate df for HTML Table
+    table_df = pd.DataFrame(columns=[f'{players[0]} Prediction',f'{players[0]} Score',"Result",f'{players[1]} Prediction',f'{players[1]} Score'])
+    for i,fixture in enumerate(fixtures.fixtures):
+        table_df.loc[i] = [str(predictions[fixture][players[0]]),str(predictions[fixture][players[0]].points),fixture.result_str(),str(predictions[fixture][players[1]]),str(predictions[fixture][players[1]].points)]
+    
+    subject = f"Premier League Predictions Game {fixture.season} - Gameweek {fixtures.gw} Predictions Complete"   
+    recipients = ["modj1999@gmail.com","jonessimon12@sky.com"]
+    msg = MIMEMultipart()
+    msg["From"]     = MY_ADDRESS
+    msg["To"]       = ", ".join(recipients)
+    msg["subject"]  = subject
+    html = """\
+    <html>
+    <head></head>
+    <body>
+        {0}
+    </body>
+    </html>
+    """.format(table_df.to_html(index=False,escape=False))
+
+    
+    part1 = MIMEText(html, 'html')
+    msg.attach(part1)
+
+    try:
+        print("Connecting to Server...")
+        with smtplib.SMTP_SSL(SMTP_SERVER,SMTP_PORT,context=ssl.create_default_context()) as smtp:
+            smtp.login(MY_ADDRESS,PASSCODE)
+            print("Connection Successful!")
+            print(f"Sending Email")
+            smtp.sendmail(MY_ADDRESS,recipients,msg.as_string())
+            print(f"Email Sent")
+    except Exception as e:
+        print(e)
+
+
+
+
 if __name__ == "__main__":
     
 
-    send_completed_predictions_email()
+    send_completed_results_email("24/25",3)
