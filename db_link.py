@@ -12,6 +12,9 @@ class PredictionData():
     def __init__(self, fixture:FixtureData,player:str) -> None:
         self.home_prediction, self.away_prediction, self.points = DB_CURSOR.execute("SELECT HomePrediction, AwayPrediction, Points FROM 'Results' WHERE HomeTeam = ? AND AwayTeam = ? and Player = ? AND season = ?",(fixture.home_team,fixture.away_team,player,fixture.season)).fetchall()[0]
         self.does_prediction_exist = True if all([self.home_prediction != None,self.away_prediction != None]) else False
+    
+    def __str__(self) -> str:
+        return f"{self.home_prediction} - {self.away_prediction}"
 
 def team_list(season:str)->list[str]:
     return [x[0] for x in DB_CURSOR.execute(f"SELECT DISTINCT HomeTeam FROM 'Results' WHERE Season = ?",(season,)).fetchall()]

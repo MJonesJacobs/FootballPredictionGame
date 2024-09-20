@@ -3,11 +3,13 @@ from datetime import datetime
 from dataclasses import dataclass
 import re
 from team_names import convert_team_name
-
+from typing import Literal
 SEASON_URL = {
     "23/24":'https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures',
     "24/25":'https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures'
 }
+
+
 
 def is_time(string):
     regex = r'^([0-2]?[0-9]:[0-5][0-9])$'
@@ -28,6 +30,12 @@ class FixtureData():
     def __post_init__(self):
         self.home_team = convert_team_name(self.home_team) # Update team name to correct format
         self.away_team = convert_team_name(self.away_team) # Update team name to correct format
+    
+    def __hash__(self) -> int:
+        return hash(tuple([self.home_team,self.away_team,self.season]))
+    
+    def fixture_str(self) -> str:
+        return f"{self.home_team} - {self.away_team}"
 
     @property
     def db_values(self)->tuple:
@@ -80,8 +88,15 @@ def get_gw_info(season:str,gw_num:int)->list[FixtureData]:
                 time=row["Time"]
             )
         )
-    sorted_list = sorted(output_list, key = lambda x:(x.date,x.time,x.home_team))
+    sorted_list = sorted(output_list, key = lambda x:(datetime.strptime(x.date, '%d/%m/%Y'),x.time,x.home_team))
     return sorted_list
+
+
+class GameweekFixtures():
+    def __init__(self,season:Literal["23/24","24/25"],gw:int) -> None:
+        self.season = season
+        self.gw = gw
+        self.fixtures = get_gw_info(season=season,gw_num=gw)
 
 if __name__ == '__main__':
 

@@ -4,16 +4,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 import ssl
-
+import pandas as pd
 import imaplib
-
-
+from db_link import PredictionData
+from web_scrape import GameweekFixtures,FixtureData
 SMTP_PORT   = 465
 SMTP_SERVER = 'smtp.gmail.com'
 
 IMAP_PORT   = 993
 IMAP_SERVER = 'imap.gmail.com'
-with open('C:\email_info\modj.txt', "r") as f:
+with open(r"C:\Users\JONESMO1\OneDrive - Jacobs\Documents\email_pass.txt", "r") as f:
     PASSCODE = f.read()
 
 MY_ADDRESS = 'modj1999@gmail.com'
@@ -83,3 +83,55 @@ def read_predictions(gameweek:int):
             print(subject)
     finally:
         connection.close()
+
+
+def send_completed_predictions_email(season:str,gw:int):
+    
+    fixtures = GameweekFixtures("24/25",1)
+    players = ["Matt","Simon"]
+    predictions = dict()
+    for fixture in fixtures.fixtures:
+        predictions[fixture]={}
+        for player in players:
+            predictions[fixture][player] = PredictionData(fixture,player)
+           
+    #Generate df for HTML Table
+    table_df = pd.DataFrame(columns=[f'{players[0]} Prediction',"Fixture",f'{players[1]} Prediction'])
+    for i,fixture in enumerate(fixtures.fixtures):
+        table_df.loc[i] = [str(predictions[fixture][players[0]]),fixture.fixture_str(),str(predictions[fixture][players[1]])]
+    
+    subject = f"Premier League Predictions Game {fixture.season} - Gameweek {fixtures.gw} Predictions Complete"   
+    recipients = ["modj1999@gmail.com","jonessimon12@sky.com"]
+    msg = MIMEMultipart()
+    msg["From"]     = MY_ADDRESS
+    msg["To"]       = ", ".join(recipients)
+    msg["subject"]  = subject
+    html = """\
+    <html>
+    <head></head>
+    <body>
+        {0}
+    </body>
+    </html>
+    """.format(table_df.to_html(index=False,escape=False))
+
+    
+    part1 = MIMEText(html, 'html')
+    msg.attach(part1)
+
+    try:
+        print("Connecting to Server...")
+        with smtplib.SMTP_SSL(SMTP_SERVER,SMTP_PORT,context=ssl.create_default_context()) as smtp:
+            smtp.login(MY_ADDRESS,PASSCODE)
+            print("Connection Successful!")
+            print(f"Sending Email")
+            smtp.sendmail(MY_ADDRESS,recipients,msg.as_string())
+            print(f"Email Sent")
+    except Exception as e:
+        print(e)
+
+
+if __name__ == "__main__":
+    
+
+    send_completed_predictions_email()
