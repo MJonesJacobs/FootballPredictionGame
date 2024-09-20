@@ -1,13 +1,14 @@
 from tkinter import *
 from tkinter import ttk
 from typing import Any
-from db_link import player_list, current_gameweek, DB_CURSOR, DB_CONNECTION
+from db_link import player_list, current_gameweek, DB_CURSOR, DB_CONNECTION, check_predictions_complete
 from tkinter_functions import clear_subframes
 from App_Formatting.formatting_conventions import frame_padx,frame_pady
 from web_scrape import get_gw_info, FixtureData
 from tkinter import messagebox
 from TeamLogos import TeamImage
 from team_names import convert_team_name
+from predication_emails import send_completed_predictions_email
 
 class PredictionRow():
     def __init__(self, player:str,gameweek:int, scape_data:FixtureData, row:int,season:str) -> None:
@@ -305,6 +306,12 @@ class ManualPredictionInput():
         if not hasattr(self,"prediction_row"):
             raise ValueError("No Prediction Object Yet!")
         self.prediction_row.commit_predictions()
+
+        # Send Email if all predictions are created
+        gw,partial = current_gameweek(self.season)
+        if check_predictions_complete(self.season,gw):
+            send_completed_predictions_email(self.season,gw)
+
         self.generate_predictions()
             
         

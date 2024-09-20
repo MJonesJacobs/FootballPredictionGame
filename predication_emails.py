@@ -8,6 +8,8 @@ import pandas as pd
 import imaplib
 from db_link import PredictionData
 from web_scrape import GameweekFixtures,FixtureData
+
+from automatic_result_upload import gw_score, total_score_upto_gw
 SMTP_PORT   = 465
 SMTP_SERVER = 'smtp.gmail.com'
 
@@ -125,13 +127,13 @@ def send_completed_results_email(season:str,gw:int):
     for i,fixture in enumerate(fixtures.fixtures):
         table_df.loc[i] = [str(predictions[fixture][players[0]]),str(predictions[fixture][players[0]].points),fixture.result_str(),str(predictions[fixture][players[1]]),str(predictions[fixture][players[1]].points)]
     
-    subject = f"Premier League Predictions Game {fixture.season} - Gameweek {fixtures.gw} Predictions Complete"   
+    subject = f"Premier League Predictions Game {fixture.season} - Gameweek {fixtures.gw} Scores"   
     recipients = ["modj1999@gmail.com","jonessimon12@sky.com"]
     msg = MIMEMultipart()
     msg["From"]     = MY_ADDRESS
     msg["To"]       = ", ".join(recipients)
     msg["subject"]  = subject
-    html = """\
+    fixture_html = """\
     <html>
     <head></head>
     <body>
@@ -141,8 +143,24 @@ def send_completed_results_email(season:str,gw:int):
     """.format(table_df.to_html(index=False,escape=False))
 
     
-    part1 = MIMEText(html, 'html')
+    part1 = MIMEText(fixture_html, 'html')
     msg.attach(part1)
+
+    points_df = pd.DataFrame(columns=["",f"{players[0]}",f"{players[1]}"])
+    points_df.loc[0] = [f"Gameweek {gw} Total",f"{gw_score(season,players[0],gw)}",f"{gw_score(season,players[1],gw)}"]
+    points_df.loc[1] = [f"Season {season} Total",f"{total_score_upto_gw(season,players[0],gw)}",f"{total_score_upto_gw(season,players[1],gw)}"]
+    
+    score_html = """\
+    <html>
+    <head></head>
+    <body>
+        {0}
+    </body>
+    </html>
+    """.format(points_df.to_html(index=False,escape=False))
+
+    part2 = MIMEText(score_html, 'html')
+    msg.attach(part2)
 
     try:
         print("Connecting to Server...")
@@ -155,10 +173,4 @@ def send_completed_results_email(season:str,gw:int):
     except Exception as e:
         print(e)
 
-
-
-
-if __name__ == "__main__":
-    
-
-    send_completed_results_email("24/25",3)
+send_completed_predictions_email("24/25",5)

@@ -27,6 +27,11 @@ def season_teams(season:str)->list[str]:
     "Returns all teams for a specified season"
     return [x[0] for x in DB_CURSOR.execute(f"""SELECT DISTINCT HomeTeam FROM 'Results' WHERE season = ? ORDER BY HomeTeam ASC""",(season,)).fetchall()]
 
+def check_predictions_complete(season,gw) ->bool:
+    predictions = [x[0] for x in DB_CURSOR.execute(f"SELECT DISTINCT PredictionAdded FROM 'Results' WHERE Season = ? AND Gameweek = ? ",(season,gw)).fetchall()]
+    return True if predictions == [1]  else False
+
+
 def add_player(name:str,season:str):
     all_teams = team_list(season)
     db_push = list()
@@ -84,7 +89,7 @@ def initiate_new_season(season:str,team_list:list[str],player_list:list[str]):
 CURRENT_GAMEWEEK,PARTIAL_GAMEWEEKS = current_gameweek(season=CURRENT_SEASON)
 print(f"{CURRENT_GAMEWEEK=}")
 print(f"{PARTIAL_GAMEWEEKS=}")
-
+print(check_predictions_complete("24/25",5))
 # if __name__ == "__main__":
 #     initiate_new_season(
 #         season="24/25",
