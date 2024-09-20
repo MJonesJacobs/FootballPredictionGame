@@ -8,7 +8,7 @@ import pandas as pd
 import imaplib
 from db_link import PredictionData
 from web_scrape import GameweekFixtures,FixtureData
-
+from db_link import DB_CURSOR,DB_CONNECTION
 from automatic_result_upload import gw_score, total_score_upto_gw
 SMTP_PORT   = 465
 SMTP_SERVER = 'smtp.gmail.com'
@@ -108,6 +108,8 @@ def send_completed_predictions_email(season:str,gw:int):
             print(f"Sending Email")
             smtp.sendmail(MY_ADDRESS,recipients,msg.as_string())
             print(f"Email Sent")
+
+            
     except Exception as e:
         print(e)
 
@@ -170,7 +172,7 @@ def send_completed_results_email(season:str,gw:int):
             print(f"Sending Email")
             smtp.sendmail(MY_ADDRESS,recipients,msg.as_string())
             print(f"Email Sent")
+            DB_CURSOR.execute(f"UPDATE 'Email_Log' SET ResultSent = 1 WHERE gameweek = {gw};")
+            DB_CONNECTION.commit()
     except Exception as e:
         print(e)
-
-send_completed_predictions_email("24/25",5)

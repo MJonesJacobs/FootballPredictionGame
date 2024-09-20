@@ -1,4 +1,4 @@
-from db_link import CURRENT_SEASON, SEASON_LIST, current_gameweek
+from db_link import CURRENT_SEASON, SEASON_LIST, current_gameweek, Completed_Gameweeks_to_Email
 # from predication_emails import send_fixtures, read_predictions
 from tkinter import ttk,LabelFrame,Tk, IntVar, StringVar, Label
 import os
@@ -10,7 +10,7 @@ from graphs import GraphFrame
 from team_dashboard import TeamDashboard
 from gameweek_comparison import GameweekComaparison
 from automatic_result_upload import update_results, update_scores, OverviewFrame
-
+from predication_emails import send_completed_results_email
 MAIN_DIR = os.getcwd()
 
 class MainApp():
@@ -162,6 +162,14 @@ if __name__ == "__main__":
     print("Results Added")
     update_scores()
     print("Scores Updated")
+    # Send Results Email
+    try:
+        for season,gameweek in Completed_Gameweeks_to_Email():
+            send_completed_results_email(season,gameweek)
+    except:
+        print("No Results Email Sent")
+
+
     MainApp()
 
 # read_predictions(38)

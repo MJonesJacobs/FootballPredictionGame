@@ -32,6 +32,7 @@ def check_predictions_complete(season,gw) ->bool:
     return True if predictions == [1]  else False
 
 
+# def check_if_latest_results_are_in
 def add_player(name:str,season:str):
     all_teams = team_list(season)
     db_push = list()
@@ -85,11 +86,19 @@ def initiate_new_season(season:str,team_list:list[str],player_list:list[str]):
     DB_CURSOR.executemany("INSERT INTO 'Results' (HomeTeam, AwayTeam, Player, Season) VALUES (?,?,?,?)",db_push)
     DB_CONNECTION.commit()
 
+
+def Completed_Gameweeks_to_Email()->list[[str,int]]:
+    gw,partial = current_gameweek(season=CURRENT_SEASON)
+    completed_gameweeks =  set([x[0] for x in DB_CURSOR.execute(f"SELECT Gameweek FROM 'Results' WHERE Season = ? GROUP BY Gameweek HAVING COUNT(*) = SUM(ResultAdded);",(CURRENT_SEASON,)).fetchall()])
+    required_gameweeks = set([x[0] for x in DB_CURSOR.execute(f"SELECT Gameweek FROM 'Email_Log' WHERE Season = ? AND ResultSent = 0",(CURRENT_SEASON,)).fetchall()])
+    gameweeks_to_add = sorted(list(completed_gameweeks.intersection(required_gameweeks)))
+    return [[CURRENT_SEASON,x] for x in gameweeks_to_add]
+
+
 # DEFINES GLOBAL VARIABLES at Main.py Import
 CURRENT_GAMEWEEK,PARTIAL_GAMEWEEKS = current_gameweek(season=CURRENT_SEASON)
 print(f"{CURRENT_GAMEWEEK=}")
 print(f"{PARTIAL_GAMEWEEKS=}")
-print(check_predictions_complete("24/25",5))
 # if __name__ == "__main__":
 #     initiate_new_season(
 #         season="24/25",
