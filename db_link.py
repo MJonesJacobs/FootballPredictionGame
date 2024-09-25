@@ -29,7 +29,8 @@ def season_teams(season:str)->list[str]:
 
 def check_predictions_complete(season,gw) ->bool:
     predictions = [x[0] for x in DB_CURSOR.execute(f"SELECT DISTINCT PredictionAdded FROM 'Results' WHERE Season = ? AND Gameweek = ? ",(season,gw)).fetchall()]
-    return True if predictions == [1]  else False
+    playercount = [x[0] for x in DB_CURSOR.execute(f"SELECT COUNT (DISTINCT player) as distinct_player FROM 'Results' WHERE Season = ? AND Gameweek = ? ",(season,gw)).fetchall()]
+    return True if all([predictions == [1],playercount == [2]])  else False
 
 
 # def check_if_latest_results_are_in
@@ -127,3 +128,5 @@ print(f"{PARTIAL_GAMEWEEKS=}")
 #             "Matt",
 #             "Simon"
 #         ])
+
+print(check_predictions_complete("24/25",6))
