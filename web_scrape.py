@@ -5,7 +5,7 @@ import re
 from team_names import convert_team_name
 from typing import Literal
 SEASON_URL = {
-    "23/24":'https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures',
+    "23/24":'https://fbref.com/en/comps/9/2023-2024/schedule/2023-2024-Premier-League-Scores-and-Fixtures',
     "24/25":'https://fbref.com/en/comps/9/2024-2025/schedule/2024-2025-Premier-League-Scores-and-Fixtures'
 }
 
@@ -56,6 +56,9 @@ def gameweek_url(season:str)->str:
 def game_week_data(season:str,gameweek:int)->pd.DataFrame:
     season_data = pd.read_html(gameweek_url(season=season))[0]
     gw_data = season_data[season_data["Wk"]==gameweek]
+    if "Notes" in gw_data.columns: # Additional Dlag to filter out Postponed games
+        gw_data = gw_data[gw_data['Notes']!='Match Postponed']
+        # Need to add in code to delete these from DB when detected
     return gw_data
 
 def clean_name(name_str:str)->str:

@@ -2,6 +2,8 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
+
 import os
 import ssl
 import pandas as pd
@@ -10,6 +12,8 @@ from db_link import PredictionData
 from web_scrape import GameweekFixtures,FixtureData
 from db_link import DB_CURSOR,DB_CONNECTION
 from automatic_result_upload import gw_score, total_score_upto_gw
+from TeamLogos import LOGOS
+
 SMTP_PORT   = 465
 SMTP_SERVER = 'smtp.gmail.com'
 
@@ -81,10 +85,10 @@ def send_completed_predictions_email(season:str,gw:int):
     for i,fixture in enumerate(fixtures.fixtures):
         table_df.loc[i] = [str(predictions[fixture][players[0]]),fixture.fixture_str(),str(predictions[fixture][players[1]])]
     
-    subject = f"Premier League Predictions Game {fixture.season} - Gameweek {fixtures.gw} Predictions Complete"   
+    subject = f"Gameweek {fixtures.gw} Predictions Complete"   
     recipients = ["modj1999@gmail.com","jonessimon12@sky.com"]
     msg = MIMEMultipart()
-    msg["From"]     = MY_ADDRESS
+    msg["From"]     =  f"Premier League Predictions Game {fixture.season}"
     msg["To"]       = ", ".join(recipients)
     msg["subject"]  = subject
     html = """\
@@ -129,10 +133,10 @@ def send_completed_results_email(season:str,gw:int):
     for i,fixture in enumerate(fixtures.fixtures):
         table_df.loc[i] = [str(predictions[fixture][players[0]]),str(predictions[fixture][players[0]].points),fixture.result_str(),str(predictions[fixture][players[1]]),str(predictions[fixture][players[1]].points)]
     
-    subject = f"Premier League Predictions Game {fixture.season} - Gameweek {fixtures.gw} Scores"   
+    subject = f"Gameweek {fixtures.gw} Scores"   
     recipients = ["modj1999@gmail.com","jonessimon12@sky.com"]
     msg = MIMEMultipart()
-    msg["From"]     = MY_ADDRESS
+    msg["From"]     = f"Premier League Predictions Game {fixture.season}"
     msg["To"]       = ", ".join(recipients)
     msg["subject"]  = subject
     fixture_html = """\

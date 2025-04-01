@@ -128,5 +128,3 @@ print(f"{PARTIAL_GAMEWEEKS=}")
 #             "Matt",
 #             "Simon"
 #         ])
-
-print(check_predictions_complete("24/25",6))

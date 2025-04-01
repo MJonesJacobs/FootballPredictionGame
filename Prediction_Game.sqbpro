@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:\Users\JONESMO1\OneDrive - Jacobs\Documents\FootballPredictionGame\Prediction_Game.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8980"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,12:mainActual_Table"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1">CREATE VIEW PredictedResultSimilarity AS
+WITH UniquePredictions AS (
+	SELECT HomeTeam,AwayTeam,Season,
+		CASE
+			WHEN HomePrediction - AwayPrediction &lt;0 THEN -1
+			WHEN HomePrediction - AwayPrediction =0 THEN 0
+			ELSE 1
+		END AS PredictedResult
+	FROM Results
+	WHERE PredictionAdded = 1 AND ResultAdded = 1
+	GROUP BY HomeTeam,AwayTeam, Season, PredictedResult
+),
+
+GroupedFixtures AS (
+SELECT COUNT(*) AS UniqueResults, HomeTeam, AwayTeam, Season
+FROM UniquePredictions
+GROUP BY HomeTeam, AwayTeam, Season
+)
+
+SELECT 
+	COUNT(*) AS 'Total Fixtures', 
+	CASE
+		WHEN UniqueResults = 1 THEN 'Same Prediction'
+		ELSE 'Different Prediction'
+	END AS 'Predicted Result Similarity'
+	FROM GroupedFixtures
+	GROUP BY UniqueResults
+</sql><current_tab id="0"/></tab_sql></sqlb_project>

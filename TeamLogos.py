@@ -78,4 +78,4 @@ def gen_placeholder():
     img.save('placeholder.png', 'PNG')
 
 
-gen_placeholder()
+# gen_placeholder()
